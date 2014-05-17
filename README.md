@@ -1,7 +1,7 @@
 # Pacm
 
 **Homepage**: [http://sourcey.com/pacm](http://sourcey.com/pacm)  
-**Licence**: LGPL
+**Licence**: LGPL  
 **Dependencies**: [LibSourcey (base, uv, net, json, crypto, archo, http)](http://sourcey.com/libsourcey)  
     
 Pacm is a front-end package manager written in C++ that can be embedded or redistributed with native applications to make short work of the following tasks:
@@ -13,7 +13,7 @@ Pacm is a front-end package manager written in C++ that can be embedded or redis
 
 There are a lot of open source [package managers](http://en.wikipedia.org/wiki/List_of_software_package_management_systems) out there, but none of them quite fit the bill for a minimal and flexible native package manager that could be easily distributed with our apps, so we built Pacm.
 
-The Pacm codebase is kept quite small and readable thanks to LibSourcey which handles and abstracts complex cross-platform tasks such as networking, filesystem and cryptography.
+The Pacm codebase is kept quite small and readable thanks to LibSourcey which handles and abstracts all the complex cross-platform tasks such as networking, filesystem and cryptography.
 
 Pacm speaks to the server using a basic [client-server JSON protocol](#client-server-protocol) which is very straight forward to integrate with your existing web server architecture. 
 
@@ -217,7 +217,7 @@ An example of a server response to a Pacm query is illustrated below. Pacm will 
 
 ## Contributing
 
-1. [Fork LibSourcey on Github](https://github.com/sourcey/pacm)
+1. [Fork Pacm on Github](https://github.com/sourcey/pacm)
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
