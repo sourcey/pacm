@@ -80,25 +80,25 @@ Pacm comes with a redistributable command-line tool which can be compiled and re
 Print help:
 
 ~~~ bash
-pacm --help
+pacm -help
 ~~~
 
 Install the Anionu `surveillancemodeplugin`:
 
 ~~~ bash
-pacm --endpoint https://anionu.com --uri /packages.json --print --install surveillancemodeplugin
+pacm -endpoint https://anionu.com -uri /packages.json -print -install surveillancemodeplugin
 ~~~
 
 Uninstall the Anionu `surveillancemodeplugin`:
 
 ~~~ bash
-pacm --endpoint https://anionu.com --uri /packages.json --print --install surveillancemodeplugin
+pacm -endpoint https://anionu.com -uri /packages.json -print -install surveillancemodeplugin
 ~~~
 
 Update all installed packages to the latest version:
 
 ~~~ bash
-pacm --endpoint https://anionu.com --uri /packages.json --print --update
+pacm -endpoint https://anionu.com -uri /packages.json -print -update
 ~~~
 
 ### Supported Commands

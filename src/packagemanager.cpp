@@ -29,19 +29,6 @@ using namespace std;
 
 namespace scy { 
 namespace pacm {
-
-
-//
-// TODO: 
-// 1) Check the integrity and version of package manifest
-//		files before overwriting.
-// 2) Ensure there is only a single manifest file per folder.
-// 3) Generate update reports.
-// 4) Generate a package profile JSON document for keeping
-//	track of installed packages.
-// 5) Ensure no updates are active for current package before updaing.
-// 6) CRC checks.
-//
 	
 
 PackageManager::PackageManager(const Options& options) :
