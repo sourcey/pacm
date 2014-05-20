@@ -11,7 +11,7 @@ Pacm is your solution for a simple front-end package manager that can be easily 
 * Dependency Management
 * Remote Plugin Management
 
-The Pacm API should a familiar territory if you're familiar with Ruby's `rubygems` and NodeJS's 'npm'. Basically, a [package list](#client-server-protocol) is downloaded from the server in JSON format, and the client then [issues commands](#supported-commands) to manage packages installed on the local system. You can work with the API one of two ways; you can [embed Pacm](#embedding-pacm) by including and compiling the source into your application; or you can just call the [redistributable Pacm binary](#redistributable-command-line-tool) directly.
+The Pacm API should a familiar territory if you're familiar with Ruby's `rubygems` and NodeJS's `npm`. Basically, a [package list](#client-server-protocol) is downloaded from the server in JSON format, and the client then [issues commands](#supported-commands) to manage packages installed on the local system. You can work with the API one of two ways; you can [embed Pacm](#embedding-pacm) by including and compiling the source into your application; or you can just call the [redistributable Pacm binary](#redistributable-command-line-tool) directly.
 
 The Pacm code base is kept small and readable thanks to LibSourcey, which abstracts and handles complex cross-platform tasks such as networking, filesystem and cryptography. LibSourcey is built on to of `libuv`, NodeJS's super fast networking layer, and provides a modern C++ interface for the native Pacm API.
 
@@ -103,21 +103,18 @@ pacm --endpoint https://myserver.com --uri /packages.json --print --update
 
 ### Supported Commands
 
-The following commands are implemented by the redistributable application. This is likely to be expanded upon in the near future, and in the mean time pull requests are very welcome:
+The following commands are implemented by the Pacm application:
 
 ~~~
 General commands:
-
   -help           Print help
   -logfile        Log file output path
 
 Server commands:
-
   -endpoint       HTTP server endpoint
   -uri            HTTP server package JSON index URI
 
 Package commands:
-
   -install        Packages to install (comma separated)
   -uninstall      Packages to uninstall (comma separated)
   -update         Update all packages
@@ -125,7 +122,6 @@ Package commands:
   -checksum-alg   Checksum algorithm for verifying packages (MDS/SHA1)
 
 Filesystem commands:
-
   -install-dir    Directory where packages will be installed
   -data-dir       Directory where package manifests will be stored
   -temp-dir       Directory where intermediate package files will be stored
@@ -231,6 +227,8 @@ The server responds with an array of packages and available file assets in JSON 
 ~~~    
 
 ## Contributing
+
+If you improve on the code base and want to contribute to the project then pull requests are always very welcome.
 
 1. [Fork Pacm on Github](https://github.com/sourcey/pacm)
 2. Create your feature branch (`git checkout -b my-new-feature`)
