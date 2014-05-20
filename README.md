@@ -86,19 +86,19 @@ pacm --help
 Install the Anionu `surveillancemodeplugin`:
 
 ~~~ bash
-pacm --endpoint https://myserver.com --uri /packages.json --print --install surveillancemodeplugin
+pacm --endpoint https://anionu.com --uri /packages.json --print --install surveillancemodeplugin
 ~~~
 
 Uninstall the Anionu `surveillancemodeplugin`:
 
 ~~~ bash
-pacm --endpoint https://myserver.com --uri /packages.json --print --install surveillancemodeplugin
+pacm --endpoint https://anionu.com --uri /packages.json --print --install surveillancemodeplugin
 ~~~
 
 Update all installed packages to the latest version:
 
 ~~~ bash
-pacm --endpoint https://myserver.com --uri /packages.json --print --update
+pacm --endpoint https://anionu.com --uri /packages.json --print --update
 ~~~
 
 ### Supported Commands
@@ -156,7 +156,7 @@ The server responds with an array of packages and available file assets in JSON 
         "file-name": "surveillancemodeplugin-0.9.4-sdk-0.6.2-win32.zip",
         "file-size": 432321,
         "mirrors": [{
-            "url": "https://myserver.com/packages/surveillancemodeplugin/download/surveillancemodeplugin-0.9.4-sdk-0.6.2-win32.zip"
+            "url": "https://anionu.com/packages/surveillancemodeplugin/download/surveillancemodeplugin-0.9.4-sdk-0.6.2-win32.zip"
         }]
     }, {
         "version": "0.9.3",
@@ -166,7 +166,7 @@ The server responds with an array of packages and available file assets in JSON 
         "file-name": "surveillancemodeplugin-0.9.3-sdk-0.6.0-win32-debug.zip",
         "file-size": 432221,
         "mirrors": [{
-            "url": "https://myserver.com/packages/surveillancemodeplugin/download/surveillancemodeplugin-0.9.3-sdk-0.6.0-win32-debug.zip"
+            "url": "https://anionu.com/packages/surveillancemodeplugin/download/surveillancemodeplugin-0.9.3-sdk-0.6.0-win32-debug.zip"
         }]
     }]
 }, {
@@ -183,7 +183,7 @@ The server responds with an array of packages and available file assets in JSON 
         "file-name": "mediaplugin-0.8.9-sdk-0.6.2-win32.zip",
         "file-size": 1352888,
         "mirrors": [{
-            "url": "https://myserver.com/packages/mediaplugin/download/mediaplugin-0.8.9-sdk-0.6.2-win32.zip"
+            "url": "https://anionu.com/packages/mediaplugin/download/mediaplugin-0.8.9-sdk-0.6.2-win32.zip"
         }]
     }, {
         "version": "0.8.8",
@@ -193,7 +193,7 @@ The server responds with an array of packages and available file assets in JSON 
         "file-name": "mediaplugin-0.8.8-sdk-0.6.0-win32-debug.zip",
         "file-size": 1352818,
         "mirrors": [{
-            "url": "https://myserver.com/packages/mediaplugin/download/mediaplugin-0.8.8-sdk-0.6.0-win32-debug.zip"
+            "url": "https://anionu.com/packages/mediaplugin/download/mediaplugin-0.8.8-sdk-0.6.0-win32-debug.zip"
         }]
     }]
 }, {
@@ -210,7 +210,7 @@ The server responds with an array of packages and available file assets in JSON 
         "file-name": "webrtcplugin-0.1.1-sdk-0.6.2-win32.zip",
         "file-size": 0,
         "mirrors": [{
-            "url": "https://myserver.com/packages/webrtcplugin/download/webrtcplugin-0.1.1-sdk-0.6.2-win32.zip"
+            "url": "https://anionu.com/packages/webrtcplugin/download/webrtcplugin-0.1.1-sdk-0.6.2-win32.zip"
         }]
     }, {
         "version": "0.1.0",
@@ -220,7 +220,7 @@ The server responds with an array of packages and available file assets in JSON 
         "file-name": "webrtcplugin-0.1.0-sdk-0.6.0-win32-debug.zip",
         "file-size": 3888157,
         "mirrors": [{
-            "url": "https://myserver.com/packages/webrtcplugin/download/webrtcplugin-0.1.0-sdk-0.6.0-win32-debug.zip"
+            "url": "https://anionu.com/packages/webrtcplugin/download/webrtcplugin-0.1.0-sdk-0.6.0-win32-debug.zip"
         }]
     }]
 }]
