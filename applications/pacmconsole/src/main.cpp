@@ -14,10 +14,10 @@ using namespace scy;
 //
 // Examples:
 //
-// pacm --help
-// pacm --endpoint https://anionu.com --uri /packages.json --install surveillancemodeplugin,recordingmodeplugin --print
-// pacm --endpoint https://anionu.com --uri /packages.json --uninstall surveillancemodeplugin,recordingmodeplugin --print
-// pacm --endpoint https://anionu.com --uri /packages.json --update --print
+// pacm -help
+// pacm -endpoint https://anionu.com -uri /packages.json -install surveillancemodeplugin,recordingmodeplugin -print
+// pacm -endpoint https://anionu.com -uri /packages.json -uninstall surveillancemodeplugin,recordingmodeplugin -print
+// pacm -endpoint https://anionu.com -uri /packages.json -update -print
 //
 // TODO:
 // - Better error and package install failure output
@@ -59,35 +59,35 @@ public:
 			"\n(c) Sourcey"
 			"\nhttp://sourcey.com/pacm"
 			"\n"
-			"\n# General commands:"
+			"\nGeneral commands:"
 			"\n"
-			"\n  --help           Print help"
-			"\n  --logfile        Log file path"
+			"\n  -help           Print help"
+			"\n  -logfile        Log file path"
 			"\n"
-			"\n# Server commands:"
+			"\nServer commands:"
 			"\n"
-			"\n  --endpoint       HTTP server endpoint"
-			"\n  --uri            HTTP server package JSON index URI"
+			"\n  -endpoint       HTTP server endpoint"
+			"\n  -uri            HTTP server package JSON index URI"
 			"\n"
-			"\n# Package commands:"
+			"\nPackage commands:"
 			"\n"
-			"\n  --install        Packages to install (comma separated)"
-			"\n  --uninstall      Packages to uninstall (comma separated)"
-			"\n  --update         Update all packages"
-			"\n  --print          Print all local and remote packages on exit"
-			"\n  --checksum-alg   Checksum algorithm for verifying packages (MDS/SHA1)"
+			"\n  -install        Packages to install (comma separated)"
+			"\n  -uninstall      Packages to uninstall (comma separated)"
+			"\n  -update         Update all packages"
+			"\n  -print          Print all local and remote packages on exit"
+			"\n  -checksum-alg   Checksum algorithm for verifying packages (MDS/SHA1)"
 			"\n"
-			"\n# Filesystem commands:"
+			"\nFilesystem commands:"
 			"\n"
-			"\n  --install-dir    Directory where packages will be installed"
-			"\n  --data-dir       Directory where package manifests will be stored"
-			"\n  --temp-dir       Directory where intermediate package files will be stored"
+			"\n  -install-dir    Directory where packages will be installed"
+			"\n  -data-dir       Directory where package manifests will be stored"
+			"\n  -temp-dir       Directory where intermediate package files will be stored"
 			<< endl;
 	}
 	
 	void parseOptions(int argc, char* argv[])
 	{
-		OptionParser optparse(argc, argv, "--");
+		OptionParser optparse(argc, argv, "-");
 		for (auto& kv : optparse.args) {	
 			const std::string& key = kv.first;
 			const std::string& value = kv.second;
