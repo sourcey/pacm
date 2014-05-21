@@ -5,6 +5,7 @@
 
 
 using std::cout;
+using std::cerr;
 using std::endl;
 using namespace scy;
 
@@ -18,9 +19,6 @@ using namespace scy;
 // pacm -endpoint https://anionu.com -uri /packages.json -install surveillancemodeplugin,recordingmodeplugin -print
 // pacm -endpoint https://anionu.com -uri /packages.json -uninstall surveillancemodeplugin,recordingmodeplugin -print
 // pacm -endpoint https://anionu.com -uri /packages.json -update -print
-//
-// TODO:
-// - Better error and package install failure output
 //
 
 
@@ -55,7 +53,7 @@ public:
 	void printHelp()
 	{
 		cout << 
-			"\nPacm v0.1.0"
+			"\nPacm v0.2.0"
 			"\n(c) Sourcey"
 			"\nhttp://sourcey.com/pacm"
 			"\n"
@@ -127,69 +125,74 @@ public:
 				log->setPath(value);
 			}
 			else {
-				cout << "Unrecognized command: " << key << "=" << value << endl;
+				cerr << "Unrecognized command: " << key << "=" << value << endl;
 			}
 		}
 	}
 
 	void work()
 	{		
-		// Print help
-		if (options.help) {
-			printHelp();
-			return;
-		}
-
-		// Initialize Pacman and query remote packages from the server
-		manager.initialize();
-		manager.queryRemotePackages();
-		scy::Application::run(); 
-		assert(manager.initialized());
-
-		// Uninstall packages if requested
-		if (!options.uninstall.empty()) {
-			cout << "# Uninstall packages: " << options.install.size() << endl;
-			manager.uninstallPackages(options.uninstall);
-			scy::Application::run(); 
-		}
-
-		// Install packages if requested
-		if (!options.install.empty()) {
-			cout << "# Install packages: " << options.install.size() << endl;
-			manager.installPackages(options.install);
-			scy::Application::run(); 
-		}
-
-		// Update all packages if requested
-		if (options.update) {
-			cout << "# Update all packages" << endl;
-			manager.updateAllPackages();
-			scy::Application::run(); 
-		}
-
-		// Print packages to stdout
-		if (options.print) {
-			cout << "# Print packages" << endl;
-
-			// Print local packages
-			{
-				cout << "Local packages: " << manager.localPackages().size() << endl;
-				for (auto& kv : manager.localPackages().map()) {			
-					cout << "  - " << kv.first << ": version=" 
-						<< kv.second->version() << ", state=" 
-						<< kv.second->state() << endl;
-				}
+		try {				
+			// Print help
+			if (options.help) {
+				printHelp();
+				return;
 			}
 
-			// Print remote packages
-			{
-				cout << "Remote packages: " << manager.remotePackages().size() << endl;
-				for (auto& kv : manager.remotePackages().map()) {	
-					cout << "  - " << kv.first << ": version=" 
-						<< kv.second->latestAsset().version() << ", author=" 
-						<< kv.second->author() << endl;
+			// Initialize Pacman and query remote packages from the server
+			manager.initialize();
+			manager.queryRemotePackages();
+			scy::Application::run(); 
+			assert(manager.initialized());
+
+			// Uninstall packages if requested
+			if (!options.uninstall.empty()) {
+				cout << "# Uninstall packages: " << options.install.size() << endl;
+				manager.uninstallPackages(options.uninstall);
+				scy::Application::run(); 
+			}
+
+			// Install packages if requested
+			if (!options.install.empty()) {
+				cout << "# Install packages: " << options.install.size() << endl;
+				manager.installPackages(options.install);
+				scy::Application::run(); 
+			}
+
+			// Update all packages if requested
+			if (options.update) {
+				cout << "# Update all packages" << endl;
+				manager.updateAllPackages();
+				scy::Application::run(); 
+			}
+
+			// Print packages to stdout
+			if (options.print) {
+				cout << "# Print packages" << endl;
+
+				// Print local packages
+				{
+					cout << "Local packages: " << manager.localPackages().size() << endl;
+					for (auto& kv : manager.localPackages().map()) {			
+						cout << "  - " << kv.first << ": version=" 
+							<< kv.second->version() << ", state=" 
+							<< kv.second->state() << endl;
+					}
+				}
+
+				// Print remote packages
+				{
+					cout << "Remote packages: " << manager.remotePackages().size() << endl;
+					for (auto& kv : manager.remotePackages().map()) {	
+						cout << "  - " << kv.first << ": version=" 
+							<< kv.second->latestAsset().version() << ", author=" 
+							<< kv.second->author() << endl;
+					}
 				}
 			}
+		}
+		catch (std::exception& exc) {
+			cerr << "Pacm runtime error: " << exc.what() << endl;
 		}
 	}	
 };
@@ -227,90 +230,3 @@ int main(int argc, char** argv)
 
 	return 0;
 }
-
-
-#if 0
-	Thread console([](void* arg) 
-	{
-		auto app = reinterpret_cast<PacmApplication*>(arg);		
-	
-		char o = 0;
-		while (o != 'Q') 
-		{	
-			cout << 
-				"COMMANDS:\n"
-				"  A	Set Active Packages."
-				"  L	List Local Packages."
-				"  K	List Remote Packages."
-				"  J	Display Latest Remote Package Asset."
-				"  R	Reload Package List."
-				"  I	Install Packages."
-				"  U	Uninstall Packages."
-				"  D	Update All Packages."
-				"  Q	Quit.\n";
-		
-			o = toupper(getch());		
-
-			// Set Active Packages
-			if (o == 'A') {	
-				cout << "Enter packages names separated by commas: " << endl;
-				string s;
-				getline(cin,s);
-				packages = util::split(s, ",");
-			}
-
-			// List Local Packages
-			else if (o == 'L') {
-				cout << "Listing local packages: " << app->manager.localPackages().size() << endl;
-				auto items = app->manager.localPackages().map();
-				for (auto it = items.begin(); it != items.end(); ++it) {				
-					cout << "Package: " << it->first << endl;
-				}
-			} 
-
-			// List Remote Packages
-			else if (o == 'K') {
-				cout << "Listing remote packages: " << app->manager.remotePackages().size() << endl;
-				auto items = app->manager.remotePackages().map();
-				for (auto it = items.begin(); it != items.end(); ++it) {				
-					cout << "Package: " << it->first << endl;
-				}
-			} 
-
-			// Display Latest Remote Package Asset
-			else if (o == 'J') {
-				auto  items = app->manager.remotePackages().map();
-				for (auto it = items.begin(); it != items.end(); ++it) {			
-					it->second->latestAsset().print(InfoL);	
-				}
-			} 
-
-			// Reload Package List
-			else if (o == 'R') {
-				app->manager.uninitialize();
-				app->manager.initialize();
-			} 
-
-			// Install Packages
-			else if (o == 'I') {
-				assert(!packages.empty());
-				app->manager.install(packages);
-			} 
-
-			// Uninstall Packages
-			else if (o == 'U') {
-				assert(!packages.empty());
-				app->manager.uninstall(packages);
-			} 
-
-			// Update All Packages
-			else if (o == 'D') {
-				app->manager.updateAllPackages();
-			}
-		}
-	}, &app);
-
-	app.waitForShutdown([](void* arg) {			
-		reinterpret_cast<PacmApplication*>(arg)->stop();
-	}, &app);
-#endif

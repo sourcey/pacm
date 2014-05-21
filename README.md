@@ -4,22 +4,23 @@
 **Licence**: LGPL  
 **Dependencies**: [LibSourcey (base, uv, net, json, crypto, archo, http)](http://sourcey.com/libsourcey)  
     
-Pacm is your solution for a simple front-end package manager that can be easily embedded and redistributed with native C++ applications. Pacm is designed to make short work of the following tasks:
+Pacm is your solution for a simple C++ package manager that can be embedded and redistributed with native applications. Pacm is designed to make short work of the following tasks:
 
 * Auto-Updates
+* Front-end Package Management
 * Version Constrained Package Management
 * Dependency Management
 * Remote Plugin Management
 
-The Pacm API should a familiar territory if you're familiar with Ruby's `rubygems` and NodeJS's `npm`. Basically, a [package list](#client-server-protocol) is downloaded from the server in JSON format, and the client then [issues commands](#supported-commands) to manage packages installed on the local system. You can work with the API one of two ways; you can [embed Pacm](#embedding-pacm) by including and compiling the source into your application; or you can just call the [redistributable Pacm binary](#redistributable-command-line-tool) directly.
+Pacm should be familiar territory if you've ever used `rubygems` in Ruby, or `npm` in NodeJS. Basically, a [package list](#client-server-protocol) is downloaded from the server in JSON format, and the client then [issues commands](#supported-commands) to manage packages installed on the local system. You can work with the API one of two ways; by [embedding Pacm](#embedding-pacm) and compiling it with your application; or by redistributing it with your application and calling the [Pacm command line tool](#redistributable-command-line-tool) directly.
 
 The Pacm code base is kept small and readable thanks to LibSourcey, which abstracts and handles complex cross-platform tasks such as networking, filesystem and cryptography. LibSourcey is built on to of `libuv`, NodeJS's super fast networking layer, and provides a modern C++ interface for the native Pacm API.
 
-There are a lot of open source [package managers](http://en.wikipedia.org/wiki/List_of_software_package_management_systems) out there, but there has been great need of a simple embeddable package manager in C++ for some time. We built Pacm for this reason, and we're pleased to contribute it to the open source community.
+There are a lot of open source [package managers](http://en.wikipedia.org/wiki/List_of_software_package_management_systems) out there, but there has been great need of a simple embeddable package manager in C++ for some time. For this reason we built Pacm, and we're pleased to contribute it to the open source community.
 
 ## Embedding Pacm
 
-Pacm is written in simple, readable C++11 code, so if you have some basic coding nouse then you'll be all over it like Barry White on a waterbed full of hamburgers. 
+Pacm is written in simple and readable C++11 code, so if you have some basic coding nouse then you'll be all over it like Barry White on a waterbed covered in hamburgers. 
 
 The example below shows how to use the C++ API to query, list, install and uninstall packages:
 
@@ -73,7 +74,7 @@ For all method definitions and further documentation the [source code](https://g
 
 ## Redistributable Command Line Tool
 
-Pacm comes with a redistributable command-line tool which can be compiled and redistributed with your existing applications. In many ways this is preferable to embedding Pacm as it allows you to decouple complex version management code from your main application, but depending on which platforms you are targeting there may also be security limitations you need to consider.
+Pacm comes with a redistributable command-line tool which can be compiled and redistributed with your existing applications. In many ways this is preferable to embedding Pacm as it allows you to decouple complex version management code from your main application, but depending on which platforms you are targeting there may also be security limitations to consider.
 
 ### Examples
 
@@ -103,7 +104,7 @@ pacm -endpoint https://anionu.com -uri /packages.json -print -update
 
 ### Supported Commands
 
-The following commands are implemented by the Pacm application:
+The following commands are currently supported by the Pacm console application:
 
 ~~~
 General commands:
