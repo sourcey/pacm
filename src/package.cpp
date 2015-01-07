@@ -137,7 +137,7 @@ std::string Package::Asset::checksum() const
 
 std::string Package::Asset::url(int index) const
 {
-	return root["mirrors"][(size_t)index]["url"].asString();
+	return root["mirrors"][index]["url"].asString();
 }
 
 
@@ -212,9 +212,9 @@ Package::Asset RemotePackage::latestAsset()
 
 	// The latest asset may not be in order, so
 	// make sure we always return the latest one.
-	size_t index = 0;
+	int index = 0;
 	if (assets.size() > 1) {
-		for (unsigned i = 1; i < assets.size(); i++) {
+		for (int i = 1; i < static_cast<int>(assets.size()); i++) {
 			if (util::compareVersion(assets[i]["version"].asString(), assets[index]["version"].asString())) {
 				index = i;
 			}
@@ -231,8 +231,8 @@ Package::Asset RemotePackage::assetVersion(const std::string& version)
 	if (assets.empty())
 		throw std::runtime_error("Package has no assets");
 
-	size_t index = -1;
-	for (unsigned i = 0; i < assets.size(); i++) {
+	int index = -1;
+	for (int i = 1; i < static_cast<int>(assets.size()); i++) {
 		if (assets[i]["version"].asString() == version) {
 			index = i;
 			break;
@@ -252,8 +252,8 @@ Package::Asset RemotePackage::latestSDKAsset(const std::string& version)
 	if (assets.empty())
 		throw std::runtime_error("Package has no assets");
 
-	size_t index = -1;
-	for (unsigned i = 0; i < assets.size(); i++) {		
+	int index = -1;
+	for (int i = 1; i < static_cast<int>(assets.size()); i++) {	
 		if (assets[i]["sdk-version"].asString() == version && (index == -1 || (
 			assets[index]["sdk-version"].asString() != version || 
 			util::compareVersion(assets[i]["version"].asString(), assets[index]["version"].asString())))) {

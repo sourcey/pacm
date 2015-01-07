@@ -32,11 +32,11 @@ namespace pacm {
 #define DEFAULT_PACKAGE_TEMP_DIR "pacm/tmp"
 #define DEFAULT_CHECKSUM_ALGORITHM "MD5"
 
-#ifdef WIN32
+#ifdef _WIN32
 #define DEFAULT_PLATFORM "win32"
-#elif APPLE
+#elif __APPLE__
 #define DEFAULT_PLATFORM "mac"
-#elif LINUX
+#elif __linux__
 #define DEFAULT_PLATFORM "linux"
 #else
 #error "Unknown platform"
