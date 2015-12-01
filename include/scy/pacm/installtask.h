@@ -161,8 +161,8 @@ protected:
 	InstallOptions	_options;
 	int             _progress;
 	bool			_downloading;
-	uv::Loop*       _loop;
 	http::ClientConnection::Ptr _dlconn;
+	uv::Loop*       _loop;
 	
 	friend class PackageManager;
 	friend class InstallMonitor;	

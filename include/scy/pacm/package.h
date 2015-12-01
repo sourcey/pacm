@@ -134,7 +134,7 @@ struct LocalPackage: public Package
 		json::Value& root;
 
 	private:
-		Manifest& operator = (const Manifest&) {}
+		//Manifest& operator = (const Manifest&) {}
 	};
 
 	LocalPackage();

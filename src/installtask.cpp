@@ -41,9 +41,9 @@ InstallTask::InstallTask(PackageManager& manager, LocalPackage* local, RemotePac
 	_local(local),
 	_remote(remote),
 	_options(options),
-	_dlconn(nullptr),
-	_downloading(false),
 	_progress(0),
+	_downloading(false),
+	_dlconn(nullptr),
 	_loop(loop)
 {
 	TraceLS(this) << "Create" << endl;
