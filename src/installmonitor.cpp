@@ -41,107 +41,107 @@ InstallMonitor::~InstallMonitor()
 
 void InstallMonitor::onInstallStateChange(void* sender, InstallationState& state, const InstallationState& oldState)
 {
-	auto task = reinterpret_cast<InstallTask*>(sender);
+    auto task = reinterpret_cast<InstallTask*>(sender);
 
-	DebugL << "[InstallMonitor] onInstallStateChange: " << task << ": " << state << endl;
+    DebugL << "[InstallMonitor] onInstallStateChange: " << task << ": " << state << endl;
 
-	InstallStateChange.emit(this, *task, state, oldState);
+    InstallStateChange.emit(this, *task, state, oldState);
 }
 
 
 void InstallMonitor::onInstallComplete(void* sender) 
 {
-	auto task = reinterpret_cast<InstallTask*>(sender);
+    auto task = reinterpret_cast<InstallTask*>(sender);
 
-	DebugL << "[InstallMonitor] Package Install Complete: " << task->state().toString() << endl;
+    DebugL << "[InstallMonitor] Package Install Complete: " << task->state().toString() << endl;
 
-	// Notify listeners when each package completes.
-	InstallComplete.emit(this, *task->local());
-	
-	int progress = 0;
-	{
-		Mutex::ScopedLock lock(_mutex);
+    // Notify listeners when each package completes.
+    InstallComplete.emit(this, *task->local());
+    
+    int progress = 0;
+    {
+        Mutex::ScopedLock lock(_mutex);
 
-		// Remove the package task reference.
-		for (auto it = _tasks.begin(); it != _tasks.end(); it++) {
-			if (task == it->get()) {
-				task->StateChange -= sdelegate(this, &InstallMonitor::onInstallStateChange); 
-				task->Complete -= sdelegate(this, &InstallMonitor::onInstallComplete);
-				_tasks.erase(it);
-				break;
-			}
-		}
+        // Remove the package task reference.
+        for (auto it = _tasks.begin(); it != _tasks.end(); it++) {
+            if (task == it->get()) {
+                task->StateChange -= sdelegate(this, &InstallMonitor::onInstallStateChange); 
+                task->Complete -= sdelegate(this, &InstallMonitor::onInstallComplete);
+                _tasks.erase(it);
+                break;
+            }
+        }
 
-		progress = (_packages.size() - _tasks.size()) / _packages.size();
+        progress = (_packages.size() - _tasks.size()) / _packages.size();
 
-		InfoL << "[InstallMonitor] Waiting on " 
-			<< _tasks.size() << " packages to complete" << endl;
-	}
+        InfoL << "[InstallMonitor] Waiting on " 
+            << _tasks.size() << " packages to complete" << endl;
+    }
 
-	// Set progress
-	setProgress(progress);
+    // Set progress
+    setProgress(progress);
 
-	if (isComplete())
-		Complete.emit(this, _packages);
+    if (isComplete())
+        Complete.emit(this, _packages);
 }
 
 
 void InstallMonitor::addTask(InstallTask::Ptr task)
 {
-	Mutex::ScopedLock lock(_mutex);
-	if (!task->valid())
-		throw std::runtime_error("Invalid package task");
-	_tasks.push_back(task);
-	_packages.push_back(task->_local);
-	task->StateChange += sdelegate(this, &InstallMonitor::onInstallStateChange);
-	task->Complete += sdelegate(this, &InstallMonitor::onInstallComplete);
+    Mutex::ScopedLock lock(_mutex);
+    if (!task->valid())
+        throw std::runtime_error("Invalid package task");
+    _tasks.push_back(task);
+    _packages.push_back(task->_local);
+    task->StateChange += sdelegate(this, &InstallMonitor::onInstallStateChange);
+    task->Complete += sdelegate(this, &InstallMonitor::onInstallComplete);
 }
 
 
 void InstallMonitor::startAll()
-{	
-	Mutex::ScopedLock lock(_mutex);
-	for (auto it = _tasks.begin(); it != _tasks.end(); it++)
-		(*it)->start();
+{    
+    Mutex::ScopedLock lock(_mutex);
+    for (auto it = _tasks.begin(); it != _tasks.end(); it++)
+        (*it)->start();
 }
 
 
 void InstallMonitor::cancelAll()
-{	
-	Mutex::ScopedLock lock(_mutex);
-	for (auto it = _tasks.begin(); it != _tasks.end(); it++)
-		(*it)->cancel();
+{    
+    Mutex::ScopedLock lock(_mutex);
+    for (auto it = _tasks.begin(); it != _tasks.end(); it++)
+        (*it)->cancel();
 }
 
 
 void InstallMonitor::setProgress(int value)
 {
-	{
-		Mutex::ScopedLock lock(_mutex);	
-		_progress = value;
-	}
-	Progress.emit(this, value);
+    {
+        Mutex::ScopedLock lock(_mutex);    
+        _progress = value;
+    }
+    Progress.emit(this, value);
 }
 
 
 InstallTaskPtrVec InstallMonitor::tasks() const 
 { 
-	Mutex::ScopedLock lock(_mutex);
-	return _tasks; 
+    Mutex::ScopedLock lock(_mutex);
+    return _tasks; 
 }
 
 
 LocalPackageVec InstallMonitor::packages() const 
 { 
-	Mutex::ScopedLock lock(_mutex);
-	return _packages; 
+    Mutex::ScopedLock lock(_mutex);
+    return _packages; 
 }
 
 
 bool InstallMonitor::isComplete() const 
 { 
-	Mutex::ScopedLock lock(_mutex);
-	return _tasks.empty(); 
+    Mutex::ScopedLock lock(_mutex);
+    return _tasks.empty(); 
 }
 
 

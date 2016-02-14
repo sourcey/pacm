@@ -1,7 +1,7 @@
 ask_build_sourcey_module(pacm)
 if(BUILD_MODULES AND BUILD_MODULE_pacm) 
   #include_dependency(OpenSSL REQUIRED)
-  #include_dependency(JsonCpp REQUIRED)
+  #include_dependency(JsonCpp)
   #include_dependency(LibUV REQUIRED)
   #include_dependency(HttpParser REQUIRED)
   #include_dependency(ZLIB REQUIRED)
