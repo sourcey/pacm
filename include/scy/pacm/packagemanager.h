@@ -30,7 +30,7 @@
 #include "scy/filesystem.h"
 #include "scy/platform.h"
 #include "scy/stateful.h"
-#include "scy/taskrunner.h"
+#include "scy/task.h"
 #include "scy/json/json.h"
 
 

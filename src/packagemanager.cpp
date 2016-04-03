@@ -22,14 +22,15 @@
 #include "scy/util.h"
 #include "scy/http/client.h"
 #include "scy/http/authenticator.h"
+#include "scy/util/outputstreamwriter.h"
 
 
 using namespace std;
 
 
-namespace scy { 
+namespace scy {
 namespace pacm {
-    
+
 
 PackageManager::PackageManager(const Options& options) :
     _options(options)
@@ -41,7 +42,7 @@ PackageManager::~PackageManager()
 {
 }
 
-    
+
 void PackageManager::initialize()
 {
     createDirectories();
@@ -58,9 +59,9 @@ bool PackageManager::initialized() const
 
 
 void PackageManager::uninitialize()
-{    
+{
     cancelAllTasks();
-    
+
     Mutex::ScopedLock lock(_mutex);
     _remotePackages.clear();
     _localPackages.clear();
@@ -80,7 +81,7 @@ void PackageManager::cancelAllTasks()
 
 void PackageManager::createDirectories()
 {
-    Mutex::ScopedLock lock(_mutex);    
+    Mutex::ScopedLock lock(_mutex);
     fs::mkdirr(_options.tempDir);
     fs::mkdirr(_options.dataDir);
     fs::mkdirr(_options.installDir);
@@ -88,21 +89,21 @@ void PackageManager::createDirectories()
 
 
 void PackageManager::queryRemotePackages()
-{    
-    Mutex::ScopedLock lock(_mutex);    
-    DebugL << "Querying server: " 
+{
+    Mutex::ScopedLock lock(_mutex);
+    DebugL << "Querying server: "
         << _options.endpoint << _options.indexURI << endl;
 
     if (!_tasks.empty())
-        throw std::runtime_error("Cannot load packages while tasks are active.");    
+        throw std::runtime_error("Cannot load packages while tasks are active.");
 
     try {
         auto conn = http::Client::instance().createConnection(_options.endpoint + _options.indexURI);
-        conn->Complete += sdelegate(this, &PackageManager::onPackageQueryResponse);        
+        conn->Complete += sdelegate(this, &PackageManager::onPackageQueryResponse);
         conn->request().setMethod("GET");
         conn->request().setKeepAlive(false);
-        conn->setReadStream(new std::stringstream);
-        
+        conn->Incoming.attach(new OutputStreamWriter(new std::stringstream));
+
         // OAuth authentication
         if (!_options.httpOAuthToken.empty()) {
             conn->request().add("Authorization", "Bearer " + _options.httpOAuthToken);
@@ -111,7 +112,7 @@ void PackageManager::queryRemotePackages()
         // HTTP Basic authentication
         else if (!_options.httpUsername.empty()) {
             http::BasicAuthenticator cred(_options.httpUsername, _options.httpPassword);
-            cred.authenticate(conn->request()); 
+            cred.authenticate(conn->request());
         }
 
         conn->send();
@@ -126,19 +127,19 @@ void PackageManager::queryRemotePackages()
 void PackageManager::onPackageQueryResponse(void* sender, const http::Response& response)
 {
     auto conn = reinterpret_cast<http::ClientConnection*>(sender);
+    auto writer = conn->Incoming.getProcessor<OutputStreamWriter>();
+// #ifdef _DEBUG
+//     TraceL << "Server response: "
+//         << response << conn->readStream<std::stringstream>()->str() << endl;
+// #endif
 
-#ifdef _DEBUG
-    TraceL << "Server response: " 
-        << response << conn->readStream<std::stringstream>()->str() << endl;
-#endif
-            
     json::Value root;
     json::Reader reader;
-    bool ok = reader.parse(conn->readStream<std::stringstream>()->str(), root);
+    bool ok = reader.parse(writer->stream<std::stringstream>().str(), root);
     if (ok) {
         _remotePackages.clear();
-        
-        for (auto it = root.begin(); it != root.end(); it++) {        
+
+        for (auto it = root.begin(); it != root.end(); it++) {
             auto package = new RemotePackage(*it);
             if (!package->valid()) {
                 ErrorL << "Invalid package: " << package->id() << endl;
@@ -146,7 +147,7 @@ void PackageManager::onPackageQueryResponse(void* sender, const http::Response& 
                 continue;
             }
             _remotePackages.add(package->id(), package);
-        }        
+        }
     }
     else {
         // TODO: Set error state
@@ -164,7 +165,7 @@ void PackageManager::loadLocalPackages()
         Mutex::ScopedLock lock(_mutex);
 
         if (!_tasks.empty())
-            throw std::runtime_error("Cannot load packages while there are active tasks.");    
+            throw std::runtime_error("Cannot load packages while there are active tasks.");
 
         _localPackages.clear();
         dir = _options.dataDir;
@@ -175,12 +176,12 @@ void PackageManager::loadLocalPackages()
 
 void PackageManager::loadLocalPackages(const std::string& dir)
 {
-    DebugL << "Loading manifests: " << dir << endl;        
-    
+    DebugL << "Loading manifests: " << dir << endl;
+
     StringVec nodes;
     fs::readdir(dir, nodes);
-    for (unsigned i = 0; i < nodes.size(); i++) {    
-        if (nodes[i].find(".json") != std::string::npos) {        
+    for (unsigned i = 0; i < nodes.size(); i++) {
+        if (nodes[i].find(".json") != std::string::npos) {
             LocalPackage* package = nullptr;
             try {
                 std::string path(dir);
@@ -193,7 +194,7 @@ void PackageManager::loadLocalPackages(const std::string& dir)
                 if (!package->valid()) {
                     throw std::runtime_error("The local package is invalid.");
                 }
-                
+
                 DebugL << "local package added: " << package->name() << endl;
                 localPackages().add(package->id(), package);
             }
@@ -247,8 +248,8 @@ bool PackageManager::saveLocalPackage(LocalPackage& package, bool whiny)
 //
 
 InstallTask::Ptr PackageManager::installPackage(const std::string& name, const InstallOptions& options) //, bool whiny
-{    
-    DebugL << "Install package: " << name << endl;    
+{
+    DebugL << "Install package: " << name << endl;
 
     // Try to update our remote package list if none exist.
     // TODO: Consider storing a remote package cache file.
@@ -256,7 +257,7 @@ InstallTask::Ptr PackageManager::installPackage(const std::string& name, const I
         //queryRemotePackages();
 
     // Get the asset to install or throw
-    PackagePair pair = getOrCreatePackagePair(name);    
+    PackagePair pair = getOrCreatePackagePair(name);
 
     // Get the asset to install or return a nullptr
     InstallOptions opts(options);
@@ -264,10 +265,10 @@ InstallTask::Ptr PackageManager::installPackage(const std::string& name, const I
         Package::Asset asset = getLatestInstallableAsset(pair, options);
 
         // Set the version option as the version to install.
-        // KLUDGE: Instead of modifying options, we should have 
+        // KLUDGE: Instead of modifying options, we should have
         // a better way of sending the asset/version to the InstallTask.
         opts.version = asset.version();
-        
+
         DebugL << "Installing asset: " << asset.root.toStyledString() << endl;
     }
     catch (std::exception& exc) {
@@ -275,7 +276,7 @@ InstallTask::Ptr PackageManager::installPackage(const std::string& name, const I
         return nullptr;
     }
 
-    return createInstallTask(pair, opts);    
+    return createInstallTask(pair, opts);
 }
 
 
@@ -285,16 +286,16 @@ Package::Asset PackageManager::getLatestInstallableAsset(const PackagePair& pair
         throw std::runtime_error("Must have a local and remote package to determine installable assets.");
 
     bool isInstalledAndVerified =
-        pair.local->isInstalled() && 
+        pair.local->isInstalled() &&
         pair.local->verifyInstallManifest();
-    
+
     DebugL << "Get asset to install:"
-        << "\n\tName: " << pair.local->name() 
+        << "\n\tName: " << pair.local->name()
         << "\n\tDesired Version: " << options.version
         << "\n\tDesired SDK Version: " << options.sdkVersion
-        << "\n\tLocal Version: " << pair.local->version() 
-        << "\n\tLocal Version Lock: " << pair.local->versionLock() 
-        << "\n\tLocal SDK Version Lock: " << pair.local->sdkLockedVersion() 
+        << "\n\tLocal Version: " << pair.local->version()
+        << "\n\tLocal Version Lock: " << pair.local->versionLock()
+        << "\n\tLocal SDK Version Lock: " << pair.local->sdkLockedVersion()
         << "\n\tLocal Verified: " << isInstalledAndVerified
         << endl;
 
@@ -307,28 +308,28 @@ Package::Asset PackageManager::getLatestInstallableAsset(const PackagePair& pair
         // TODO: Is this really necessary, perhaps the option should override the saved package?
         if (!pair.local->versionLock().empty() && options.version != pair.local->versionLock())
             throw std::runtime_error("Invalid version option: Package already locked at version: " + pair.local->versionLock());
-        
+
         // Get the latest asset for locked SDK version or throw
         Package::Asset asset = pair.remote->assetVersion(version);
         assert(asset.version() == version);
-        
+
         // Throw if we are already running the locked version
         if (isInstalledAndVerified && !util::compareVersion(asset.version(), pair.local->version()))
             throw std::runtime_error("Package is up-to-date at locked version: " + asset.version());
-        
+
         // Return the requested asset or throw
-        return asset;                
+        return asset;
     }
-    
+
     // Return the latest asset for a specific SDK asset version if requested
     std::string sdkVersion(options.sdkVersion.empty() ? pair.local->sdkLockedVersion() : options.sdkVersion);
     if (!sdkVersion.empty()) {
         DebugL << "Get latest asset for SDK version: " << sdkVersion << endl;
-        
+
         // Ensure the SDK version lock option doesn't conflict with the saved package
         if (!pair.local->sdkLockedVersion().empty() && sdkVersion != pair.local->sdkLockedVersion())
             throw std::runtime_error("Invalid SDK version option: Package already locked at SDK version: " + pair.local->sdkLockedVersion());
-        
+
         // Get the latest asset for SDK version or throw
         Package::Asset sdkAsset = pair.remote->latestSDKAsset(sdkVersion);
         assert(sdkAsset.sdkVersion() == sdkVersion);
@@ -340,15 +341,15 @@ Package::Asset PackageManager::getLatestInstallableAsset(const PackagePair& pair
         // Return the newer asset for the locked SDK version
         return sdkAsset;
     }
-    
+
     // Try to return an asset which is newer than the current one or throw
     Package::Asset latestAsset = pair.remote->latestAsset();
     if (isInstalledAndVerified && !util::compareVersion(latestAsset.version(), pair.local->version()))
         throw std::runtime_error("Package is up-to-date at version: " + pair.local->version());
-    
+
     // Return the newer asset
     return latestAsset;
-            
+
 #if 0
     // Return true if the locked version is already installed
     if (!pair.local->versionLock().empty() || !options.version.empty()) {
@@ -357,7 +358,7 @@ Package::Asset PackageManager::getLatestInstallableAsset(const PackagePair& pair
         // TODO: assert valid version?
 
         // Make sure the version option matches the lock, if both were set
-        if (!options.version.empty() && !pair.local->versionLock().empty() && 
+        if (!options.version.empty() && !pair.local->versionLock().empty() &&
             options.version != pair.local->versionLock())
             throw std::runtime_error("Invalid version option: Package locked at version: " + pair.local->versionLock());
 
@@ -368,18 +369,18 @@ Package::Asset PackageManager::getLatestInstallableAsset(const PackagePair& pair
         // Return the locked asset, or throw
         return pair.remote->assetVersion(versionLock);
     }
-    
+
     // Get the best asset from the locked SDK version, if applicable
-    if (!pair.local->sdkLockedVersion().empty() || !options.sdkVersion.empty()) {        
-                
+    if (!pair.local->sdkLockedVersion().empty() || !options.sdkVersion.empty()) {
+
         // Make sure the version option matches the lock, if both were set
-        if (!options.sdkVersion.empty() && !pair.local->sdkLockedVersion().empty() && 
+        if (!options.sdkVersion.empty() && !pair.local->sdkLockedVersion().empty() &&
             options.sdkVersion != pair.local->sdkLockedVersion())
             throw std::runtime_error("Invalid SDK version option: Package locked at SDK version: " + pair.local->sdkLockedVersion());
-        
+
         // Get the latest asset for SDK version
         Package::Asset sdkAsset = pair.remote->latestSDKAsset(pair.local->sdkLockedVersion()); // throw if none
-        
+
         // If everything is in order there is nothing to install
         if (isInstalledAndVerified && pair.local->asset().sdkVersion() == pair.local->sdkLockedVersion() &&
             !util::compareVersion(sdkAsset.version(), pair.local->version()))
@@ -392,7 +393,7 @@ Package::Asset PackageManager::getLatestInstallableAsset(const PackagePair& pair
     Package::Asset latestAsset = pair.remote->latestAsset();
     if (isInstalledAndVerified && !util::compareVersion(latestAsset.version(), pair.local->version()))
         throw std::runtime_error("Package is up-to-date.");
-    
+
     return latestAsset;
 #endif
 }
@@ -410,8 +411,8 @@ bool PackageManager::hasAvailableUpdates(const PackagePair& pair) const
 
 
 bool PackageManager::installPackages(const StringVec& ids, const InstallOptions& options, InstallMonitor* monitor, bool whiny)
-{    
-    bool res = false;    
+{
+    bool res = false;
     try {
         for (auto it = ids.begin(); it != ids.end(); ++it) {
             auto task = installPackage(*it, options); //, whiny
@@ -424,7 +425,7 @@ bool PackageManager::installPackages(const StringVec& ids, const InstallOptions&
         }
     }
     catch (std::exception& exc) {
-        ErrorL << "Installation failed: " << exc.what() << endl;    
+        ErrorL << "Installation failed: " << exc.what() << endl;
         if (whiny)
             throw exc;
     }
@@ -433,13 +434,13 @@ bool PackageManager::installPackages(const StringVec& ids, const InstallOptions&
 
 
 InstallTask::Ptr PackageManager::updatePackage(const std::string& name, const InstallOptions& options)
-{    
+{
     // An update action is essentially the same as an install action,
     // except we make sure local package exists before continuing.
     {
         if (!localPackages().exists(name)) {
             std::string error("Update Failed: " + name + " is not installed.");
-            ErrorL << "" << error << endl;    
+            ErrorL << "" << error << endl;
             throw std::runtime_error(error);
             //if (whiny)
             //else
@@ -452,7 +453,7 @@ InstallTask::Ptr PackageManager::updatePackage(const std::string& name, const In
 
 
 bool PackageManager::updatePackages(const StringVec& ids, const InstallOptions& options, InstallMonitor* monitor, bool whiny)
-{    
+{
     // An update action is essentially the same as an install action,
     // except we make sure local package exists before continuing.
     StringVec toUpdate(ids);
@@ -460,7 +461,7 @@ bool PackageManager::updatePackages(const StringVec& ids, const InstallOptions& 
         for (auto it = ids.begin(); it != ids.end(); ++it) {
             if (!localPackages().exists(*it)) {
                 std::string error("Cannot update " + *it + " because it's not installed.");
-                ErrorL << error << endl;    
+                ErrorL << error << endl;
                 if (whiny)
                     throw std::runtime_error(error);
                 //else
@@ -469,7 +470,7 @@ bool PackageManager::updatePackages(const StringVec& ids, const InstallOptions& 
             else toUpdate.push_back(*it);
         }
     }
-    
+
     return installPackages(toUpdate, options, monitor, whiny);
 }
 
@@ -478,10 +479,10 @@ bool PackageManager::updateAllPackages(bool whiny)
 {
     StringVec toUpdate;
     auto& packages = localPackages().map();
-    for (auto it = packages.begin(); it != packages.end(); ++it) {    
+    for (auto it = packages.begin(); it != packages.end(); ++it) {
         toUpdate.push_back(it->first);
     }
-    
+
     InstallOptions options;
     return installPackages(toUpdate, options, nullptr, whiny);
 }
@@ -489,19 +490,19 @@ bool PackageManager::updateAllPackages(bool whiny)
 
 bool PackageManager::uninstallPackage(const std::string& id, bool whiny)
 {
-    DebugL << "Uninstalling: " << id << endl;    
-    
+    DebugL << "Uninstalling: " << id << endl;
+
     try {
         LocalPackage* package = localPackages().get(id, true);
-        try {    
+        try {
             // Delete package files from manifest
-            // NOTE: If some files fail to delete we still consider the uninstall a success.    
+            // NOTE: If some files fail to delete we still consider the uninstall a success.
             LocalPackage::Manifest manifest = package->manifest();
             if (!manifest.empty()) {
                 for (auto it = manifest.root.begin(); it != manifest.root.end(); it++) {
                     std::string path(package->getInstalledFilePath((*it).asString()));
-                    DebugL << "Delete file: " << path << endl;    
-                    try {                                            
+                    DebugL << "Delete file: " << path << endl;
+                    try {
                         fs::unlink(path);
                     }
                     catch (std::exception& exc) {
@@ -509,16 +510,16 @@ bool PackageManager::uninstallPackage(const std::string& id, bool whiny)
                     }
                 }
                 manifest.root.clear();
-            }    
+            }
             else {
-                DebugL << "Uninstall: Empty package manifest: " << id << endl;    
-            }    
-    
+                DebugL << "Uninstall: Empty package manifest: " << id << endl;
+            }
+
             // Delete package manifest file
             std::string path(options().dataDir);
             fs::addnode(path, package->id() + ".json"); // manifest_
-            
-            DebugL << "Delete manifest: " << path << endl;    
+
+            DebugL << "Delete manifest: " << path << endl;
             fs::unlink(path);
         }
         catch (std::exception& exc) {
@@ -531,7 +532,7 @@ bool PackageManager::uninstallPackage(const std::string& id, bool whiny)
 
         // Notify the outside application
         PackageUninstalled.emit(this, *package);
-        
+
         // Free package reference from memory
         localPackages().remove(package);
         delete package;
@@ -540,7 +541,7 @@ bool PackageManager::uninstallPackage(const std::string& id, bool whiny)
         ErrorL << "Fatal uninstall error: " << exc.what() << endl;
         if (whiny)
             throw exc;
-        else 
+        else
             return false;
     }
 
@@ -549,8 +550,8 @@ bool PackageManager::uninstallPackage(const std::string& id, bool whiny)
 
 
 bool PackageManager::uninstallPackages(const StringVec& ids, bool whiny)
-{    
-    DebugL << "Uuninstall packages: " << ids.size() << endl;    
+{
+    DebugL << "Uuninstall packages: " << ids.size() << endl;
     bool res = true;
     for (auto it = ids.begin(); it != ids.end(); ++it) {
         if (!uninstallPackage(*it, whiny))
@@ -561,8 +562,8 @@ bool PackageManager::uninstallPackages(const StringVec& ids, bool whiny)
 
 
 InstallTask::Ptr PackageManager::createInstallTask(PackagePair& pair, const InstallOptions& options) //const std::string& name, InstallMonitor* monitor)
-{    
-    InfoL << "Create install task: " << pair.name() << endl;    
+{
+    InfoL << "Create install task: " << pair.name() << endl;
 
     // Ensure we only have one task per package
     if (getInstallTask(pair.remote->id()))
@@ -580,15 +581,15 @@ InstallTask::Ptr PackageManager::createInstallTask(PackagePair& pair, const Inst
 
 
 bool PackageManager::hasUnfinalizedPackages()
-{    
+{
     //Mutex::ScopedLock lock(_mutex);
 
     DebugL << "checking for unfinalized packages" << endl;
-    
-    bool res = false;    
+
+    bool res = false;
     auto& packages = localPackages().map();
     for (auto it = packages.begin(); it != packages.end(); ++it) {
-        if (it->second->state() == "Installing" && 
+        if (it->second->state() == "Installing" &&
             it->second->installState() == "Finalizing") {
             DebugL << "finalization required: " << it->second->name() << endl;
             res = true;
@@ -602,12 +603,12 @@ bool PackageManager::hasUnfinalizedPackages()
 bool PackageManager::finalizeInstallations(bool whiny)
 {
     DebugL << "Finalizing installations" << endl;
-    
-    bool res = true;    
+
+    bool res = true;
     auto& packages = localPackages().map();
     for (auto it = packages.begin(); it != packages.end(); ++it) {
         try {
-            if (it->second->state() == "Installing" && 
+            if (it->second->state() == "Installing" &&
                 it->second->installState() == "Finalizing") {
                 DebugL << "Finalizing: " << it->second->name() << endl;
 
@@ -615,10 +616,10 @@ bool PackageManager::finalizeInstallations(bool whiny)
                 // to move some files around so no async required.
                 InstallTask task(*this, it->second, nullptr);
                 task.doFinalize();
-                
-                assert(it->second->state() == "Installed" 
+
+                assert(it->second->state() == "Installed"
                     && it->second->installState() == "Installed");
-                
+
                 // Manually emit the install complete signal.
                 InstallTaskComplete.emit(this, task);
 
@@ -648,10 +649,10 @@ bool PackageManager::finalizeInstallations(bool whiny)
 
 void PackageManager::onPackageInstallComplete(void* sender)
 {
-    auto task = reinterpret_cast<InstallTask*>(sender);    
-    TraceL << "Install complete: " 
+    auto task = reinterpret_cast<InstallTask*>(sender);
+    TraceL << "Install complete: "
         << task->state().toString() << endl;
-    
+
     // Save the local package
     saveLocalPackage(*task->local());
 
@@ -700,7 +701,7 @@ InstallTaskPtrVec PackageManager::tasks() const
 //
 
 PackagePair PackageManager::getPackagePair(const std::string& id, bool whiny) const
-{        
+{
     Mutex::ScopedLock lock(_mutex);
     auto local = _localPackages.get(id, false);
     auto remote = _remotePackages.get(id, false);
@@ -716,7 +717,7 @@ PackagePair PackageManager::getPackagePair(const std::string& id, bool whiny) co
 
 
 PackagePairVec PackageManager::getPackagePairs() const
-{    
+{
     PackagePairVec pairs;
     Mutex::ScopedLock lock(_mutex);
     auto lpackages = _localPackages.map(); // copy
@@ -742,9 +743,9 @@ PackagePairVec PackageManager::getPackagePairs() const
 
 PackagePairVec PackageManager::getUpdatablePackagePairs() const
 {
-    PackagePairVec pairs = getPackagePairs();        
+    PackagePairVec pairs = getPackagePairs();
     for (auto it = pairs.begin(); it != pairs.end();) {
-        if (!hasAvailableUpdates(*it)) {    
+        if (!hasAvailableUpdates(*it)) {
             it = pairs.erase(it);
         }
         else ++it;
@@ -754,7 +755,7 @@ PackagePairVec PackageManager::getUpdatablePackagePairs() const
 
 
 PackagePair PackageManager::getOrCreatePackagePair(const std::string& id)
-{    
+{
     Mutex::ScopedLock lock(_mutex);
     auto remote = _remotePackages.get(id, false);
     if (!remote)
@@ -775,10 +776,10 @@ PackagePair PackageManager::getOrCreatePackagePair(const std::string& id)
         local = new LocalPackage(*remote);
         _localPackages.add(id, local);
     }
-    
+
     if (!local->valid())
         throw std::runtime_error("The local package is invalid.");
-    
+
     return PackagePair(local, remote);
 }
 
@@ -787,7 +788,7 @@ string PackageManager::installedPackageVersion(const std::string& id) const
 {
     Mutex::ScopedLock lock(_mutex);
     auto local = _localPackages.get(id, true);
-    
+
     if (!local->valid())
         throw std::runtime_error("The local package is invalid.");
     if (!local->isInstalled())
@@ -799,36 +800,36 @@ string PackageManager::installedPackageVersion(const std::string& id) const
 
 #if 0
 bool PackageManager::hasAvailableUpdates(PackagePair& pair)
-{        
+{
     assert(pair.valid());
-    return pair.local && pair.remote && 
+    return pair.local && pair.remote &&
         pair.local->hasAvailableUpdates(*pair.remote);
 }
 
 
 bool PackageManager::verifyInstallManifest(LocalPackage& package)
-{    
-    DebugL << package.name() 
+{
+    DebugL << package.name()
         << ": Verifying install manifest" << endl;
 
     // Check file system for each manifest file
     LocalPackage::Manifest manifest = package.manifest();
-    for (auto it = manifest.root.begin(); it != manifest.root.end(); it++) {        
+    for (auto it = manifest.root.begin(); it != manifest.root.end(); it++) {
         std::string path = package.getInstalledFilePath((*it).asString(), false);
-        DebugL << package.name() 
+        DebugL << package.name()
             << ": Checking: " << path << endl;
         File file(path);
         if (!file.exists()) {
-            ErrorL << package.name() 
+            ErrorL << package.name()
                 << ": Missing package file: " << path << endl;
             return false;
         }
     }
-    
+
     return true;
 }
 #endif
-    
+
 
 // ---------------------------------------------------------------------
 // File Helper Methods
@@ -864,7 +865,7 @@ bool PackageManager::clearCacheFile(const std::string& fileName, bool whiny)
         return true;
     }
     catch (std::exception& exc) {
-        ErrorL << "Clear Cache Error: " 
+        ErrorL << "Clear Cache Error: "
             << fileName << ": " << exc.what() << endl;
         if (whiny)
             throw exc;
@@ -883,7 +884,7 @@ bool PackageManager::hasCachedFile(Package::Asset& asset)
 
 bool PackageManager::isSupportedFileType(const std::string& fileName)
 {
-    return fileName.find(".zip") != std::string::npos  
+    return fileName.find(".zip") != std::string::npos
         || fileName.find(".tar.gz") != std::string::npos;
 }
 
@@ -895,7 +896,7 @@ std::string PackageManager::getCacheFilePath(const std::string& fileName)
     return dir;
 }
 
-    
+
 std::string PackageManager::getPackageDataDir(const std::string& id)
 {
     std::string dir(options().dataDir);
@@ -905,24 +906,24 @@ std::string PackageManager::getPackageDataDir(const std::string& id)
 }
 
 
-PackageManager::Options& PackageManager::options() 
-{ 
+PackageManager::Options& PackageManager::options()
+{
     Mutex::ScopedLock lock(_mutex);
     return _options;
 }
 
 
-RemotePackageStore& PackageManager::remotePackages() 
-{ 
+RemotePackageStore& PackageManager::remotePackages()
+{
     Mutex::ScopedLock lock(_mutex);
-    return _remotePackages; 
+    return _remotePackages;
 }
 
 
 LocalPackageStore& PackageManager::localPackages()
-{ 
+{
     Mutex::ScopedLock lock(_mutex);
-    return _localPackages; 
+    return _localPackages;
 }
 
 

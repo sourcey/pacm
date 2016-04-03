@@ -24,6 +24,7 @@
 #include "scy/archo/zip.h"
 #include "scy/http/authenticator.h"
 #include "scy/http/client.h"
+#include "scy/util/outputstreamwriter.h"
 #include "scy/logger.h"
 #include "scy/filesystem.h"
 
@@ -31,11 +32,11 @@
 using namespace std;
 
 
-namespace scy { 
+namespace scy {
 namespace pacm {
 
 
-InstallTask::InstallTask(PackageManager& manager, LocalPackage* local, RemotePackage* remote, 
+InstallTask::InstallTask(PackageManager& manager, LocalPackage* local, RemotePackage* remote,
                          const InstallOptions& options, uv::Loop* loop) :
     _manager(manager),
     _local(local),
@@ -65,7 +66,7 @@ void InstallTask::start()
         << ", Version= " << _options.version
         << ", SDK Version=" << _options.sdkVersion
         << endl;
-        
+
     // Prepare environment and install options
 
     // Check against provided options to make sure that
@@ -94,11 +95,11 @@ void InstallTask::start()
     // Create the directory
     fs::mkdirr(_options.installDir);
 
-    // If the package failed previously we might need 
+    // If the package failed previously we might need
     // to clear the file cache.
     if (_manager.options().clearFailedCache)
         _manager.clearPackageCache(*_local);
-    
+
     _runner.start(*this);
 
     // Increment the event loop while the task active
@@ -113,12 +114,12 @@ void InstallTask::cancel()
 
 
 void InstallTask::run()
-{    
+{
     try {
         auto local = this->local();
-        switch (state().id()) 
-        {            
-        case InstallationState::None:            
+        switch (state().id())
+        {
+        case InstallationState::None:
             setProgress(0);
             doDownload();
             setState(this, InstallationState::Downloading);
@@ -126,7 +127,7 @@ void InstallTask::run()
         case InstallationState::Downloading:
             if (_downloading)
                 return; // skip until download completes
-            
+
             setState(this, InstallationState::Extracting);
             break;
         case InstallationState::Extracting:
@@ -153,7 +154,7 @@ void InstallTask::run()
             local->setState("Failed");
             setProgress(100);
             setComplete(); // complete and destroy
-            return;            
+            return;
         case InstallationState::Failed:
             local->setState("Failed");
             if (!state().message().empty())
@@ -162,10 +163,10 @@ void InstallTask::run()
             setComplete();
             return;
         default: assert(0);
-        }        
+        }
     }
-    catch (std::exception& exc) {        
-        ErrorL << "Installation failed: " << exc.what() << endl; 
+    catch (std::exception& exc) {
+        ErrorL << "Installation failed: " << exc.what() << endl;
         setState(this, InstallationState::Failed, exc.what());
     }
 }
@@ -173,7 +174,7 @@ void InstallTask::run()
 
 void InstallTask::onStateChange(InstallationState& state, const InstallationState& oldState)
 {
-    DebugL << "State changed: " << oldState << " => " << state << endl;     
+    DebugL << "State changed: " << oldState << " => " << state << endl;
 
     // Set the package install task so we know from which state to
     // resume installation.
@@ -190,11 +191,11 @@ void InstallTask::doDownload()
     if (!asset.valid())
         throw std::runtime_error("Package download failed: The remote asset is invalid.");
 
-    // If the remote asset already exists in the cache, we can 
-    // skip the download. 
+    // If the remote asset already exists in the cache, we can
+    // skip the download.
     /* // force file re-download until os get file size is fixed and we can match crc
     if (_manager.hasCachedFile(asset)) {
-        DebugL << "file exists, skipping download" << endl;        
+        DebugL << "file exists, skipping download" << endl;
         setState(this, InstallationState::Extracting);
         return;
     }
@@ -204,17 +205,19 @@ void InstallTask::doDownload()
     _dlconn = http::Client::instance().createConnection(asset.url(), _loop);
     if (!_manager.options().httpUsername.empty()) {
         http::BasicAuthenticator cred(
-            _manager.options().httpUsername, 
+            _manager.options().httpUsername,
             _manager.options().httpPassword);
-        cred.authenticate(_dlconn->request()); 
+        cred.authenticate(_dlconn->request());
     }
-    
-    DebugL << "Initializing download" 
+
+    DebugL << "Initializing download"
         << ": URI=" << asset.url()
         << ", File path=" << outfile
         << endl;
 
-    _dlconn->setReadStream(new std::ofstream(outfile, std::ios_base::out | std::ios_base::binary));
+    // _dlconn->setReadStream(new std::ofstream(outfile, std::ios_base::out | std::ios_base::binary));
+    _dlconn->Incoming.attach(new OutputStreamWriter(
+        new std::ofstream(outfile, std::ios_base::out | std::ios_base::binary)));
     _dlconn->IncomingProgress += sdelegate(this, &InstallTask::onDownloadProgress);
     _dlconn->Complete += sdelegate(this, &InstallTask::onDownloadComplete);
     _dlconn->send();
@@ -238,7 +241,7 @@ void InstallTask::onDownloadProgress(void*, const double& progress)
 void InstallTask::onDownloadComplete(void*, const http::Response& response)
 {
     DebugL << "Download complete: " << response << endl;
-    _dlconn->readStream<std::ofstream>()->close();
+    // _dlconn->readStream<std::ofstream>()->close();
     _dlconn->close();
     _dlconn = nullptr;
     _downloading = false;
@@ -248,50 +251,50 @@ void InstallTask::onDownloadComplete(void*, const http::Response& response)
 void InstallTask::doExtract()
 {
     setState(this, InstallationState::Extracting);
-        
+
     Package::Asset asset = getRemoteAsset();
     if (!asset.valid())
         throw std::runtime_error("The package can't be extracted");
-    
+
     // Get the input file and check veracity
     std::string archivePath(_manager.getCacheFilePath(asset.fileName()));
     if (!fs::exists(archivePath))
-        throw std::runtime_error("The local package file does not exist: " + archivePath);    
+        throw std::runtime_error("The local package file does not exist: " + archivePath);
     if (!_manager.isSupportedFileType(asset.fileName()))
         throw std::runtime_error("The local package has an unsupported file extension: " + fs::extname(archivePath));
 
     // Verify file checksum if one was provided
     std::string originalChecksum(asset.checksum());
     if (!originalChecksum.empty()) {
-        std::string computedChecksum(crypto::checksum(_manager.options().checksumAlgorithm, archivePath));        
+        std::string computedChecksum(crypto::checksum(_manager.options().checksumAlgorithm, archivePath));
         DebugL << "Verify checksum: original=" << originalChecksum << ", computed=" << computedChecksum << endl;
         if (originalChecksum != computedChecksum)
             throw std::runtime_error("Checksum verification failed: " + fs::extname(archivePath));
     }
-    
+
     // Create the output directory
     std::string tempDir(_manager.getPackageDataDir(_local->id()));
-    
+
     DebugL << "Unpacking archive: " << archivePath << " to " << tempDir << endl;
 
     // Reset the local installation manifest before extraction
     _local->manifest().root.clear();
-    
+
     // Decompress the archive
     arc::ZipFile zip(archivePath);
     while (true) {
         zip.extractCurrentFile(tempDir, true);
-    
-        // Add the extracted file to the package install manifest    
+
+        // Add the extracted file to the package install manifest
         // Note: Manifest stores relative paths
-        _local->manifest().addFile(zip.currentFileName()); 
+        _local->manifest().addFile(zip.currentFileName());
 
         if (!zip.goToNextFile()) break;
     }
 }
 
 
-void InstallTask::doFinalize() 
+void InstallTask::doFinalize()
 {
     setState(this, InstallationState::Finalizing);
 
@@ -302,7 +305,7 @@ void InstallTask::doFinalize()
     // Ensure the install directory exists
     fs::mkdirr(installDir);
     DebugL << "Finalizing to: " << installDir << endl;
-    
+
     // Move all extracted files to the installation path
     StringVec nodes;
     fs::readdir(tempDir, nodes);
@@ -328,7 +331,7 @@ void InstallTask::doFinalize()
         }
     }
 
-    // The package requires finalizing at a later date. 
+    // The package requires finalizing at a later date.
     // The current task will be cancelled, and the package
     // saved with the Installing state.
     if (errors) {
@@ -336,10 +339,10 @@ void InstallTask::doFinalize()
         cancel();
         return;
     }
-    
+
     // Remove the temporary output folder if the installation
     // was successfully finalized.
-    try {        
+    try {
         DebugL << "Removing temp directory: " << tempDir << endl;
 
         // FIXME: How to remove a folder properly?
@@ -363,14 +366,14 @@ void InstallTask::setComplete()
         //Mutex::ScopedLock lock(_mutex);
         assert(_progress == 100);
 
-        InfoL << "Package installed: " 
+        InfoL << "Package installed: "
             << "Name=" << _local->name()
             << ", Version=" << _local->version()
             << ", Package State=" << _local->state()
             << ", Package Install State=" << _local->installState()
             << endl;
 #ifdef _DEBUG
-        _local->print(cout);    
+        _local->print(cout);
 #endif
     }
 
@@ -384,17 +387,17 @@ void InstallTask::setComplete()
     // Cancel the runner and schedule for deletion
     assert(!_runner.cancelled());
     _runner.cancel();
-    
+
     // The task will be destroyed
     // as a result of this signal.
     Complete.emit(this);
 }
 
 
-void InstallTask::setProgress(int value) 
+void InstallTask::setProgress(int value)
 {
     {
-        //Mutex::ScopedLock lock(_mutex);    
+        //Mutex::ScopedLock lock(_mutex);
         _progress = value;
     }
     Progress.emit(this, value);
@@ -404,8 +407,8 @@ void InstallTask::setProgress(int value)
 Package::Asset InstallTask::getRemoteAsset() const
 {
     //Mutex::ScopedLock lock(_mutex);
-    return !_options.version.empty() ? 
-        _remote->assetVersion(_options.version) : 
+    return !_options.version.empty() ?
+        _remote->assetVersion(_options.version) :
             !_options.sdkVersion.empty() ?
                 _remote->latestSDKAsset(_options.sdkVersion) :
                     _remote->latestAsset();
@@ -422,8 +425,8 @@ int InstallTask::progress() const
 bool InstallTask::valid() const
 {
     //Mutex::ScopedLock lock(_mutex);
-    return !stateEquals(InstallationState::Failed) 
-        && _local->valid() 
+    return !stateEquals(InstallationState::Failed)
+        && _local->valid()
         && (!_remote || _remote->valid());
 }
 
@@ -448,8 +451,8 @@ bool InstallTask::success() const
 
 bool InstallTask::complete() const
 {
-    return stateEquals(InstallationState::Installed) 
-        || stateEquals(InstallationState::Cancelled) 
+    return stateEquals(InstallationState::Installed)
+        || stateEquals(InstallationState::Cancelled)
         || stateEquals(InstallationState::Failed);
 }
 
@@ -468,8 +471,8 @@ RemotePackage* InstallTask::remote() const
 }
 
 
-InstallOptions& InstallTask::options() 
-{ 
+InstallOptions& InstallTask::options()
+{
     //Mutex::ScopedLock lock(_mutex);
     return _options;
 }
