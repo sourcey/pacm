@@ -24,7 +24,7 @@
 #include "scy/archo/zip.h"
 #include "scy/http/authenticator.h"
 #include "scy/http/client.h"
-#include "scy/util/outputstreamwriter.h"
+#include "scy/packetio.h"
 #include "scy/logger.h"
 #include "scy/filesystem.h"
 
@@ -215,9 +215,7 @@ void InstallTask::doDownload()
         << ", File path=" << outfile
         << endl;
 
-    // _dlconn->setReadStream(new std::ofstream(outfile, std::ios_base::out | std::ios_base::binary));
-    _dlconn->Incoming.attach(new OutputStreamWriter(
-        new std::ofstream(outfile, std::ios_base::out | std::ios_base::binary)));
+    _dlconn->setReadStream(new std::ofstream(outfile, std::ios_base::out | std::ios_base::binary));
     _dlconn->IncomingProgress += sdelegate(this, &InstallTask::onDownloadProgress);
     _dlconn->Complete += sdelegate(this, &InstallTask::onDownloadComplete);
     _dlconn->send();
@@ -241,7 +239,6 @@ void InstallTask::onDownloadProgress(void*, const double& progress)
 void InstallTask::onDownloadComplete(void*, const http::Response& response)
 {
     DebugL << "Download complete: " << response << endl;
-    // _dlconn->readStream<std::ofstream>()->close();
     _dlconn->close();
     _dlconn = nullptr;
     _downloading = false;
