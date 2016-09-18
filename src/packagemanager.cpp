@@ -22,7 +22,7 @@
 #include "scy/util.h"
 #include "scy/http/client.h"
 #include "scy/http/authenticator.h"
-#include "scy/util/outputstreamwriter.h"
+#include "scy/packetio.h"
 
 
 using namespace std;
@@ -102,7 +102,7 @@ void PackageManager::queryRemotePackages()
         conn->Complete += sdelegate(this, &PackageManager::onPackageQueryResponse);
         conn->request().setMethod("GET");
         conn->request().setKeepAlive(false);
-        conn->Incoming.attach(new OutputStreamWriter(new std::stringstream));
+        conn->setReadStream(new std::stringstream);
 
         // OAuth authentication
         if (!_options.httpOAuthToken.empty()) {
@@ -127,7 +127,8 @@ void PackageManager::queryRemotePackages()
 void PackageManager::onPackageQueryResponse(void* sender, const http::Response& response)
 {
     auto conn = reinterpret_cast<http::ClientConnection*>(sender);
-    auto writer = conn->Incoming.getProcessor<OutputStreamWriter>();
+
+    // auto writer = conn->Incoming.getProcessor<OutputStreamWriter>();
 // #ifdef _DEBUG
 //     TraceL << "Server response: "
 //         << response << conn->readStream<std::stringstream>()->str() << endl;
@@ -135,7 +136,7 @@ void PackageManager::onPackageQueryResponse(void* sender, const http::Response& 
 
     json::Value root;
     json::Reader reader;
-    bool ok = reader.parse(writer->stream<std::stringstream>().str(), root);
+    bool ok = reader.parse(conn->readStream<std::stringstream>().str(), root);
     if (ok) {
         _remotePackages.clear();
 
