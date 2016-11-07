@@ -1,20 +1,12 @@
+///
 //
 // LibSourcey
-// Copyright (C) 2005, Sourcey <http://sourcey.com>
+// Copyright (c) 2005, Sourcey <http://sourcey.com>
 //
-// LibSourcey is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
+// SPDX-License-Identifier:	LGPL-2.1+
 //
-// LibSourcey is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program. If not, see <http://www.gnu.org/licenses/>.
-//
+/// @addtogroup pacm
+/// @{
 
 
 #ifndef SCY_Pacm_InstallTask_H
@@ -28,16 +20,16 @@
 #include "scy/idler.h"
 
 
-namespace scy { 
+namespace scy {
 namespace pacm {
 
-    
+
 class PackageManager;
 
 
-struct InstallationState: public State 
+struct InstallationState: public State
 {
-    enum Type 
+    enum Type
     {
         None = 0,
         Downloading,
@@ -48,8 +40,8 @@ struct InstallationState: public State
         Failed
     };
 
-    std::string str(unsigned int id) const 
-    { 
+    std::string str(unsigned int id) const
+    {
         switch(id) {
         case None:                    return "None";
         case Downloading:            return "Downloading";
@@ -60,20 +52,19 @@ struct InstallationState: public State
         case Failed:                return "Failed";
         default: assert(false);
         }
-        return "undefined"; 
+        return "undefined";
     }
 };
 
-
-struct InstallOptions 
-    // Package installation options.
+/// Package installation options.
+struct InstallOptions
 {
-    std::string version;            // If set then the given package version will be installed.
-    std::string sdkVersion;            // If set then the latest package version for given SDK
-                                    // version will be installed.
-    std::string installDir;            // Install to the given location, otherwise the manager default
-                                    // installDir will be used.
-    //bool copyManifestToInstallDir;  // Copys the local package.json file to the install directory.
+    std::string version;            ///< If set then the given package version will be installed.
+    std::string sdkVersion;         ///< If set then the latest package version for given SDK
+                                    ///< version will be installed.
+    std::string installDir;         ///< Install to the given location, otherwise the manager default
+                                    ///< installDir will be used.
+    //bool copyManifestToInstallDir;  ///< Copies the local package.json file to the install directory.
 
     InstallOptions() {
         version = "";
@@ -83,40 +74,38 @@ struct InstallOptions
 };
 
 
-class InstallTask: 
-    public async::Runnable, 
+/// This class implements the package installation procedure.
+class InstallTask:
+    public async::Runnable,
     public Stateful<InstallationState>
-    ///
-    /// This class implements the package 
-    /// installation procedure.
 {
 public:
     typedef std::shared_ptr<InstallTask> Ptr;
 
-    InstallTask(PackageManager& manager, 
-                LocalPackage* local, RemotePackage* remote, 
-                const InstallOptions& options = InstallOptions(), 
+    InstallTask(PackageManager& manager,
+                LocalPackage* local, RemotePackage* remote,
+                const InstallOptions& options = InstallOptions(),
                 uv::Loop* loop = uv::defaultLoop());
-    virtual ~InstallTask();    
+    virtual ~InstallTask();
 
     virtual void start();
     virtual void cancel();
 
+    /// Downloads the package archive from the server.
     virtual void doDownload();
-        // Downloads the package archive from the server.
 
+    /// Extracts the downloaded package files
+    /// to the intermediate directory.
     virtual void doExtract();
-        // Extracts the downloaded package files
-        // to the intermediate directory.
 
+    /// Moves extracted files from the intermediate
+    /// directory to the installation directory.
     virtual void doFinalize();
-        // Moves extracted files from the intermediate
-        // directory to the installation directory.
-    
+
+    /// Called when the task completes either
+    /// successfully or in error.
+    /// This will trigger destruction.
     virtual void setComplete();
-        // Called when the task completes either
-        // successfully or in error.
-        // This will trigger destruction.
 
     virtual Package::Asset getRemoteAsset() const;
 
@@ -124,25 +113,25 @@ public:
     virtual RemotePackage* remote() const;
     virtual InstallOptions& options();
     virtual uv::Loop* loop() const;
-    
+
     virtual bool valid() const;
     virtual bool cancelled() const;
     virtual bool failed() const;
     virtual bool success() const;
     virtual bool complete() const;
     virtual int progress() const;
-    
+
+    /// Signals on progress update [0-100].
     Signal<int&> Progress;
-        // Signals on progress update [0-100].
-    
+
+    /// Signals on task completion for both
+    /// success and failure cases.
     NullSignal Complete;
-        // Signals on task completion for both
-        // success and failure cases.
-    
+
 protected:
+    /// Called asynchronously by the thread to
+    /// do the work.
     virtual void run();
-        // Called asynchronously by the thread to
-        // do the work.
 
     virtual void onStateChange(InstallationState& state, const InstallationState& oldState);
     virtual void onDownloadProgress(void* sender, const double& progress);
@@ -152,7 +141,7 @@ protected:
 
 protected:
     mutable Mutex    _mutex;
-    
+
     Idler            _runner;
     //Thread          _thread;
     PackageManager& _manager;
@@ -163,9 +152,9 @@ protected:
     bool            _downloading;
     http::ClientConnection::Ptr _dlconn;
     uv::Loop*       _loop;
-    
+
     friend class PackageManager;
-    friend class InstallMonitor;    
+    friend class InstallMonitor;
 };
 
 
@@ -177,3 +166,5 @@ typedef std::vector<InstallTask::Ptr> InstallTaskPtrVec;
 
 
 #endif // SCY_Pacm_InstallTask_H
+
+/// @\}

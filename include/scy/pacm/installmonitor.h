@@ -1,20 +1,12 @@
+///
 //
 // LibSourcey
-// Copyright (C) 2005, Sourcey <http://sourcey.com>
+// Copyright (c) 2005, Sourcey <http://sourcey.com>
 //
-// LibSourcey is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
+// SPDX-License-Identifier:	LGPL-2.1+
 //
-// LibSourcey is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program. If not, see <http://www.gnu.org/licenses/>.
-//
+/// @addtogroup pacm
+/// @{
 
 
 #ifndef SCY_Pacm_InstallMonitor_H
@@ -24,7 +16,7 @@
 #include "scy/pacm/installtask.h"
 
 
-namespace scy { 
+namespace scy {
 namespace pacm {
 
 
@@ -33,46 +25,45 @@ typedef std::vector<LocalPackage*> LocalPackageVec;
 
 class InstallMonitor
 {
-public:    
+public:
     InstallMonitor();
     virtual ~InstallMonitor();
-    
+
+    /// Adds a task to monitor.
     virtual void addTask(InstallTask::Ptr task);
-        // Adds a task to monitor.
 
+    /// Starts all monitored tasks.
     virtual void startAll();
-        // Starts all monitored tasks.
 
+    /// Cancels all monitored tasks.
     virtual void cancelAll();
-        // Cancels all monitored tasks.
 
+    /// Returns true if all install tasks have completed,
+    /// either successfully or unsuccessfully.
     virtual bool isComplete() const;
-        // Returns true if all install tasks have completed,
-        // either successfully or unsuccessfully.
 
+    /// Returns the list of monitored package tasks.
     virtual InstallTaskPtrVec tasks() const;
-        // Returns the list of monitored package tasks.
-    
+
+    /// Returns the list of monitored packages.
     virtual LocalPackageVec packages() const;
-        // Returns the list of monitored packages.
-        
+
+    /// Proxies state change events from managed packages
     Signal3<InstallTask&, const InstallationState&, const InstallationState&> InstallStateChange;
-        // Proxies state change events from managed packages
 
+    /// Signals when a managed install task completes.
     Signal<LocalPackage&> InstallComplete;
-        // Signals when a managed install task completes.
-    
-    Signal<int&> Progress;
-        // Signals on overall progress update [0-100].
 
+    /// Signals on overall progress update [0-100].
+    Signal<int&> Progress;
+
+    /// Signals on all tasks complete.
     Signal<LocalPackageVec&> Complete;
-        // Signals on all tasks complete.
-    
+
 protected:
-    virtual void onInstallStateChange(void* sender, InstallationState& state, const InstallationState& oldState);
+    virtual void onInstallStateChange(void* sender, InstallationState& state, const InstallationState& oldState);    // Called when a monitored install task completes.
     virtual void onInstallComplete(void* sender);
-        // Called when a monitored install task completes.
-    
+
     virtual void setProgress(int value);
 
 protected:
@@ -83,8 +74,8 @@ protected:
 };
 
 
-inline std::string getInstallTaskNamesString(LocalPackageVec& packages) 
-    // Returns a comma delimited package name string.
+/// Returns a comma delimited package name string.
+inline std::string getInstallTaskNamesString(LocalPackageVec& packages)
 {
     std::string names;
     for (auto it = packages.begin(); it != packages.end();) {
@@ -101,3 +92,5 @@ inline std::string getInstallTaskNamesString(LocalPackageVec& packages)
 
 
 #endif // SCY_Pacm_InstallMonitor_H
+
+/// @\}

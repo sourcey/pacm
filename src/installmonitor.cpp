@@ -1,20 +1,12 @@
+///
 //
 // LibSourcey
-// Copyright (C) 2005, Sourcey <http://sourcey.com>
+// Copyright (c) 2005, Sourcey <http://sourcey.com>
 //
-// LibSourcey is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
+// SPDX-License-Identifier:	LGPL-2.1+
 //
-// LibSourcey is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program. If not, see <http://www.gnu.org/licenses/>.
-//
+/// @addtogroup pacm
+/// @{
 
 
 #include "scy/pacm/installmonitor.h"
@@ -25,7 +17,7 @@
 using namespace std;
 
 
-namespace scy { 
+namespace scy {
 namespace pacm {
 
 
@@ -49,7 +41,7 @@ void InstallMonitor::onInstallStateChange(void* sender, InstallationState& state
 }
 
 
-void InstallMonitor::onInstallComplete(void* sender) 
+void InstallMonitor::onInstallComplete(void* sender)
 {
     auto task = reinterpret_cast<InstallTask*>(sender);
 
@@ -57,7 +49,7 @@ void InstallMonitor::onInstallComplete(void* sender)
 
     // Notify listeners when each package completes.
     InstallComplete.emit(this, *task->local());
-    
+
     int progress = 0;
     {
         Mutex::ScopedLock lock(_mutex);
@@ -65,7 +57,7 @@ void InstallMonitor::onInstallComplete(void* sender)
         // Remove the package task reference.
         for (auto it = _tasks.begin(); it != _tasks.end(); it++) {
             if (task == it->get()) {
-                task->StateChange -= sdelegate(this, &InstallMonitor::onInstallStateChange); 
+                task->StateChange -= sdelegate(this, &InstallMonitor::onInstallStateChange);
                 task->Complete -= sdelegate(this, &InstallMonitor::onInstallComplete);
                 _tasks.erase(it);
                 break;
@@ -74,7 +66,7 @@ void InstallMonitor::onInstallComplete(void* sender)
 
         progress = (_packages.size() - _tasks.size()) / _packages.size();
 
-        InfoL << "[InstallMonitor] Waiting on " 
+        InfoL << "[InstallMonitor] Waiting on "
             << _tasks.size() << " packages to complete" << endl;
     }
 
@@ -99,7 +91,7 @@ void InstallMonitor::addTask(InstallTask::Ptr task)
 
 
 void InstallMonitor::startAll()
-{    
+{
     Mutex::ScopedLock lock(_mutex);
     for (auto it = _tasks.begin(); it != _tasks.end(); it++)
         (*it)->start();
@@ -107,7 +99,7 @@ void InstallMonitor::startAll()
 
 
 void InstallMonitor::cancelAll()
-{    
+{
     Mutex::ScopedLock lock(_mutex);
     for (auto it = _tasks.begin(); it != _tasks.end(); it++)
         (*it)->cancel();
@@ -117,32 +109,34 @@ void InstallMonitor::cancelAll()
 void InstallMonitor::setProgress(int value)
 {
     {
-        Mutex::ScopedLock lock(_mutex);    
+        Mutex::ScopedLock lock(_mutex);
         _progress = value;
     }
     Progress.emit(this, value);
 }
 
 
-InstallTaskPtrVec InstallMonitor::tasks() const 
-{ 
+InstallTaskPtrVec InstallMonitor::tasks() const
+{
     Mutex::ScopedLock lock(_mutex);
-    return _tasks; 
+    return _tasks;
 }
 
 
-LocalPackageVec InstallMonitor::packages() const 
-{ 
+LocalPackageVec InstallMonitor::packages() const
+{
     Mutex::ScopedLock lock(_mutex);
-    return _packages; 
+    return _packages;
 }
 
 
-bool InstallMonitor::isComplete() const 
-{ 
+bool InstallMonitor::isComplete() const
+{
     Mutex::ScopedLock lock(_mutex);
-    return _tasks.empty(); 
+    return _tasks.empty();
 }
 
 
 } } // namespace scy::pacm
+
+/// @\}

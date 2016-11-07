@@ -1,20 +1,12 @@
+///
 //
 // LibSourcey
-// Copyright (C) 2005, Sourcey <http://sourcey.com>
+// Copyright (c) 2005, Sourcey <http://sourcey.com>
 //
-// LibSourcey is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
+// SPDX-License-Identifier:	LGPL-2.1+
 //
-// LibSourcey is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program. If not, see <http://www.gnu.org/licenses/>.
-//
+/// @addtogroup pacm
+/// @{
 
 
 #include "scy/pacm/package.h"
@@ -25,13 +17,13 @@
 #include "assert.h"
 
 
-namespace scy { 
+namespace scy {
 namespace pacm {
 
 
 //
 // Base Package
-//    
+//
 
 
 Package::Package()
@@ -97,7 +89,7 @@ void Package::print(std::ostream& ost) const
 
 //
 // Package Asset
-//    
+//
 
 
 Package::Asset::Asset(json::Value& src) :
@@ -171,15 +163,15 @@ Package::Asset& Package::Asset::operator = (const Asset& r)
 
 bool Package::Asset::operator == (const Asset& r) const
 {
-    return fileName() == r.fileName() 
-        && version() == r.version() 
+    return fileName() == r.fileName()
+        && version() == r.version()
         && checksum() == r.checksum();
 }
 
 
 //
 // Remote Package
-//    
+//
 
 
 RemotePackage::RemotePackage()
@@ -220,7 +212,7 @@ Package::Asset RemotePackage::latestAsset()
             }
         }
     }
-    
+
     return Asset(assets[index]);
 }
 
@@ -241,7 +233,7 @@ Package::Asset RemotePackage::assetVersion(const std::string& version)
 
     if (index == -1)
         throw std::runtime_error("No package asset with version " + version);
-    
+
     return Asset(assets[index]);
 }
 
@@ -253,24 +245,24 @@ Package::Asset RemotePackage::latestSDKAsset(const std::string& version)
         throw std::runtime_error("Package has no assets");
 
     int index = -1;
-    for (int i = 1; i < static_cast<int>(assets.size()); i++) {    
+    for (int i = 1; i < static_cast<int>(assets.size()); i++) {
         if (assets[i]["sdk-version"].asString() == version && (index == -1 || (
-            assets[index]["sdk-version"].asString() != version || 
+            assets[index]["sdk-version"].asString() != version ||
             util::compareVersion(assets[i]["version"].asString(), assets[index]["version"].asString())))) {
             index = i;
         }
     }
-    
+
     if (index == -1)
         throw std::runtime_error("No package asset with SDK version " + version);
-    
+
     return Asset(assets[index]);
 }
 
 
 //
 // Local Package
-//    
+//
 
 
 LocalPackage::LocalPackage()
@@ -287,7 +279,7 @@ LocalPackage::LocalPackage(const json::Value& src) :
 LocalPackage::LocalPackage(const RemotePackage& src) :
     Package(src)
 {
-    assert(src.valid());    
+    assert(src.valid());
 
     // Clear unwanted remote package fields
     removeMember("assets");
@@ -315,7 +307,7 @@ LocalPackage::Manifest LocalPackage::manifest()
 void LocalPackage::setState(const std::string& state)
 {
     assert(
-        state == "Installing" || 
+        state == "Installing" ||
         state == "Installed" ||
         state == "Failed" ||
         state == "Uninstalled"
@@ -335,7 +327,7 @@ void LocalPackage::setVersion(const std::string& version)
 {
     if (state() != "Installed")
         throw std::runtime_error("Package must be installed before the version is set.");
-    
+
     (*this)["version"] = version;
 }
 
@@ -375,7 +367,7 @@ std::string LocalPackage::getInstalledFilePath(const std::string& fileName, bool
     std::string dir = installDir();
     if (whiny && dir.empty())
         throw std::runtime_error("Package install directory is not set.");
-    
+
     // TODO: What about sub directories?
     fs::addnode(dir, fileName);
     return dir;
@@ -419,21 +411,21 @@ std::string LocalPackage::sdkLockedVersion() const
 
 
 bool LocalPackage::verifyInstallManifest(bool allowEmpty)
-{    
+{
     DebugS(this) << name() << ": Verifying install manifest" << std::endl;
 
     // Check file system for each manifest file
     LocalPackage::Manifest manifest = this->manifest();
-    for (auto it = manifest.root.begin(); it != manifest.root.end(); it++) {        
+    for (auto it = manifest.root.begin(); it != manifest.root.end(); it++) {
         std::string path = this->getInstalledFilePath((*it).asString(), false);
         DebugS(this) << name() << ": Checking exists: " << path << std::endl;
-        
+
         if (!fs::exists(fs::normalize(path))) {
             ErrorS(this) << name() << ": Missing file: " << path << std::endl;
             return false;
         }
     }
-    
+
     return allowEmpty ? true : !manifest.empty();
 }
 
@@ -458,7 +450,7 @@ void LocalPackage::setInstallDir(const std::string& dir)
 
 
 json::Value& LocalPackage::errors()
-{    
+{
     return (*this)["errors"];
 }
 
@@ -470,7 +462,7 @@ void LocalPackage::addError(const std::string& message)
 
 
 std::string LocalPackage::lastError() const
-{    
+{
     json::Value errors = get("errors", Json::arrayValue);
     return errors.empty() ? "" : errors[errors.size() - 1].asString();
 }
@@ -480,17 +472,17 @@ void LocalPackage::clearErrors()
 {
     errors().clear();
 }
-    
+
 
 bool LocalPackage::valid() const
 {
-    return Package::valid(); 
+    return Package::valid();
 }
 
 
 //
 // Local Package Manifest
-//    
+//
 
 
 LocalPackage::Manifest::Manifest(json::Value& src) :
@@ -503,7 +495,7 @@ LocalPackage::Manifest::~Manifest()
 {
 }
 
-    
+
 void LocalPackage::Manifest::addFile(const std::string& path)
 {
     // Do not allow duplicates
@@ -513,7 +505,7 @@ void LocalPackage::Manifest::addFile(const std::string& path)
     //json::Value node(path);
     root.append(path);
 }
-    
+
 
 bool LocalPackage::Manifest::empty() const
 {
@@ -523,14 +515,14 @@ bool LocalPackage::Manifest::empty() const
 
 //
 // Package Pair
-//    
+//
 
 
 PackagePair::PackagePair(LocalPackage* local, RemotePackage* remote) :
     local(local), remote(remote)
 {
 }
-    
+
 
 std::string PackagePair::id() const
 {
@@ -561,9 +553,11 @@ bool PackagePair::valid() const
     // Packages must be valid, and
     // must have at least one package.
     return (!local || local->valid())
-        && (!remote || remote->valid()) 
+        && (!remote || remote->valid())
         && (local || remote);
 }
 
 
 } } // namespace scy::pacm
+
+/// @\}
