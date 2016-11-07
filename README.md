@@ -1,9 +1,15 @@
 # Pacm
 
+> Simple C++ package manager
+
+[![Circle CI](https://circleci.com/gh/sourcey/libsourcey.svg?style=shield&circle-token=ab142562b19bb857de796d729aab28fa9df7682d)](https://circleci.com/gh/sourcey/libsourcey)
+[![Doxygen](http://sourcey.com/images/doxygen.svg)](http://sourcey.com/libsourcey/api-pacm/)
+
 **Homepage**: [http://sourcey.com/pacm](http://sourcey.com/pacm)  
-**Licence**: LGPL  
+**Documentation**: [http://sourcey.com/libsourcey/api-pacm/](http://sourcey.com/libsourcey/api-pacm/)  
 **Dependencies**: [LibSourcey (base, uv, net, json, crypto, archo, http)](http://sourcey.com/libsourcey)  
-    
+**Licence**: LGPL
+
 Pacm is your solution for a simple C++ package manager that can be embedded and redistributed with native applications. Pacm is designed to make short work of the following tasks:
 
 * Auto-Updates
@@ -20,7 +26,7 @@ There are a lot of open source [package managers](http://en.wikipedia.org/wiki/L
 
 ## Embedding Pacm
 
-Pacm is written in simple and readable C++11 code, so if you have some basic coding nouse then you'll be all over it like Barry White on a waterbed covered in hamburgers. 
+Pacm is written in simple and readable C++11 code, so if you have some basic coding nouse then you'll be all over it like Barry White on a waterbed covered in hamburgers.
 
 The example below shows how to use the C++ API to query, list, install and uninstall packages:
 
@@ -29,24 +35,24 @@ pacm::PackageManager::Options options;
 // configuration options go here...
 pacm::PackageManager pm(options);
 pm.initialize();
-        
+
 // query the server for the latest packages
 pm.queryRemotePackages();                
-        
+
 // list local (installed) packages
 for (auto& kv : pm.localPackages().map()) {            
-    std::cout << "Local package: " 
-    << kv.first << "\n" 
+    std::cout << "Local package: "
+    << kv.first << "\n"
     << kv.second->toString() << std::endl;
 }
 
 // list remote (available) packages
 for (auto& kv : pm.remotePackages().map()) {            
-    std::cout << "Local package: " 
-    << kv.first << "\n" 
+    std::cout << "Local package: "
+    << kv.first << "\n"
     << kv.second->toString() << std::endl;
 }              
-        
+
 // install a package
 pm.installPackage("SomePackageName");
 
@@ -66,9 +72,9 @@ pm.updateAllPackages();
 // uninstall a package.
 // uninstallPackages() can also be used for multiple packages.
 pm.uninstallPackage("SomePackageName");
-~~~ 
+~~~
 
-If you're planning on using the native API then the best place to start is the source code of the [Pacm command line tool](https://github.com/sourcey/pacm/blob/master/applications/pacmconsole/src/main.cpp), which can be easily reverse engineered and modified for your own purposes.
+If you're planning on using the native API then the best place to start is the source code of the [Pacm command line tool](https://github.com/sourcey/pacm/blob/master/apps/pacmconsole/src/main.cpp), which can be easily reverse engineered and modified for your own purposes.
 
 For all method definitions and further documentation the [source code](https://github.com/sourcey/pacm/blob/master/include/scy/pacm/packagemanager.h) is always the best reference.
 
@@ -132,7 +138,7 @@ Filesystem commands:
 
 The Pacm repository does not currently include a server module, but since everything is in JSON it should be a sinch to implement using your existing web framework. All that is required on the server-side is to list packages and facilitate downloads.
 
-A server response to a Pacm query is illustrated below, and remember that since everything is in JSON you can easily add your own metadata as required. 
+A server response to a Pacm query is illustrated below, and remember that since everything is in JSON you can easily add your own metadata as required.
 
 Pacm will send a HTTP GET request to the server:
 
