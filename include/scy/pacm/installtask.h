@@ -122,11 +122,11 @@ public:
     virtual int progress() const;
 
     /// Signals on progress update [0-100].
-    Signal<int&> Progress;
+    Signal<void(InstallTask&, int&)> Progress;
 
     /// Signals on task completion for both
     /// success and failure cases.
-    NullSignal Complete;
+    Signal<void(InstallTask&)> Complete;
 
 protected:
     /// Called asynchronously by the thread to
@@ -134,8 +134,8 @@ protected:
     virtual void run();
 
     virtual void onStateChange(InstallationState& state, const InstallationState& oldState);
-    virtual void onDownloadProgress(void* sender, const double& progress);
-    virtual void onDownloadComplete(void* sender, const http::Response& response);
+    virtual void onDownloadProgress(const double& progress);
+    virtual void onDownloadComplete(const http::Response& response);
 
     virtual void setProgress(int value);
 

@@ -208,15 +208,15 @@ void InstallTask::doDownload()
         << endl;
 
     _dlconn->setReadStream(new std::ofstream(outfile, std::ios_base::out | std::ios_base::binary));
-    _dlconn->IncomingProgress += sdelegate(this, &InstallTask::onDownloadProgress);
-    _dlconn->Complete += sdelegate(this, &InstallTask::onDownloadComplete);
+    _dlconn->IncomingProgress += slot(this, &InstallTask::onDownloadProgress);
+    _dlconn->Complete += slot(this, &InstallTask::onDownloadComplete);
     _dlconn->send();
 
     _downloading = true;
 }
 
 
-void InstallTask::onDownloadProgress(void*, const double& progress)
+void InstallTask::onDownloadProgress(const double& progress)
 {
     DebugL << "Download progress: " << progress << endl;
 
@@ -228,7 +228,7 @@ void InstallTask::onDownloadProgress(void*, const double& progress)
 }
 
 
-void InstallTask::onDownloadComplete(void*, const http::Response& response)
+void InstallTask::onDownloadComplete(const http::Response& response)
 {
     DebugL << "Download complete: " << response << endl;
     _dlconn->close();
@@ -379,7 +379,7 @@ void InstallTask::setComplete()
 
     // The task will be destroyed
     // as a result of this signal.
-    Complete.emit(this);
+    Complete.emit(*this);
 }
 
 
@@ -389,7 +389,7 @@ void InstallTask::setProgress(int value)
         //Mutex::ScopedLock lock(_mutex);
         _progress = value;
     }
-    Progress.emit(this, value);
+    Progress.emit(*this, value);
 }
 
 

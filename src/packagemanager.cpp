@@ -92,7 +92,7 @@ void PackageManager::queryRemotePackages()
 
     try {
         auto conn = http::Client::instance().createConnection(_options.endpoint + _options.indexURI);
-        conn->Complete += sdelegate(this, &PackageManager::onPackageQueryResponse);
+        // conn->Complete += sdelegate(this, &PackageManager::onPackageQueryResponse);
         conn->request().setMethod("GET");
         conn->request().setKeepAlive(false);
         conn->setReadStream(new std::stringstream);
@@ -108,6 +108,16 @@ void PackageManager::queryRemotePackages()
             cred.authenticate(conn->request());
         }
 
+        conn->Complete += [&](const http::Response& response) {
+            TraceL << "On package response complete: " << response
+                // << conn->readStream<std::stringstream>().str()
+                << endl;
+
+            parseRemotePackages(conn->readStream<std::stringstream>().str() );
+            RemotePackageResponse.emit(response);
+            conn->close();
+        };
+
         conn->send();
     }
     catch (std::exception& exc) {
@@ -117,19 +127,11 @@ void PackageManager::queryRemotePackages()
 }
 
 
-void PackageManager::onPackageQueryResponse(void* sender, const http::Response& response)
+void PackageManager::parseRemotePackages(const std::string& data)
 {
-    auto conn = reinterpret_cast<http::ClientConnection*>(sender);
-
-    // auto writer = conn->Incoming.getProcessor<OutputStreamWriter>();
-// #ifdef _DEBUG
-//     TraceL << "Server response: "
-//         << response << conn->readStream<std::stringstream>()->str() << endl;
-// #endif
-
     json::Value root;
     json::Reader reader;
-    bool ok = reader.parse(conn->readStream<std::stringstream>().str(), root);
+    bool ok = reader.parse(data, root);
     if (ok) {
         _remotePackages.clear();
 
@@ -147,8 +149,6 @@ void PackageManager::onPackageQueryResponse(void* sender, const http::Response& 
         // TODO: Set error state
         ErrorL << "Invalid server JSON response: " << reader.getFormattedErrorMessages() << endl;
     }
-
-    RemotePackageResponse.emit(this, response);
 }
 
 
@@ -525,7 +525,7 @@ bool PackageManager::uninstallPackage(const std::string& id, bool whiny)
         package->setState("Uninstalled");
 
         // Notify the outside application
-        PackageUninstalled.emit(this, *package);
+        PackageUninstalled.emit(*package);
 
         // Free package reference from memory
         localPackages().remove(package);
@@ -555,7 +555,7 @@ bool PackageManager::uninstallPackages(const StringVec& ids, bool whiny)
 }
 
 
-InstallTask::Ptr PackageManager::createInstallTask(PackagePair& pair, const InstallOptions& options) //const std::string& name, InstallMonitor* monitor)
+InstallTask::Ptr PackageManager::createInstallTask(PackagePair& pair, const InstallOptions& options)
 {
     InfoL << "Create install task: " << pair.name() << endl;
 
@@ -564,12 +564,12 @@ InstallTask::Ptr PackageManager::createInstallTask(PackagePair& pair, const Inst
         throw std::runtime_error(pair.remote->name() + " is already installing.");
 
     auto task = std::make_shared<InstallTask>(*this, pair.local, pair.remote, options);
-    task->Complete += sdelegate(this, &PackageManager::onPackageInstallComplete, -1); // lowest priority to remove task
+    task->Complete += slot(this, &PackageManager::onPackageInstallComplete, -1, -1); // lowest priority to remove task
     {
         Mutex::ScopedLock lock(_mutex);
         _tasks.push_back(task);
     }
-    InstallTaskCreated.emit(this, *task);
+    InstallTaskCreated.emit(*task);
     return task; // must call task->start()
 }
 
@@ -615,7 +615,7 @@ bool PackageManager::finalizeInstallations(bool whiny)
                     && it->second->installState() == "Installed");
 
                 // Manually emit the install complete signal.
-                InstallTaskComplete.emit(this, task);
+                InstallTaskComplete.emit(task);
 
                 /*
                 if (it->second->state() != "Installed" ||
@@ -641,23 +641,22 @@ bool PackageManager::finalizeInstallations(bool whiny)
     return res;
 }
 
-void PackageManager::onPackageInstallComplete(void* sender)
+void PackageManager::onPackageInstallComplete(InstallTask& task)
 {
-    auto task = reinterpret_cast<InstallTask*>(sender);
     TraceL << "Install complete: "
-        << task->state().toString() << endl;
+        << task.state().toString() << endl;
 
     // Save the local package
-    saveLocalPackage(*task->local());
+    saveLocalPackage(*task.local());
 
-    //PackageInstallationComplete.emit(this, *task->local());
-    InstallTaskComplete.emit(this, *task);
+    //PackageInstallationComplete.emit(*task.local());
+    InstallTaskComplete.emit(task);
 
     // Remove the task reference
     {
         Mutex::ScopedLock lock(_mutex);
         for (auto it = _tasks.begin(); it != _tasks.end(); it++) {
-            if (it->get() == task) {
+            if (it->get() == &task) {
                 _tasks.erase(it);
                 break;
             }

@@ -35,9 +35,9 @@ namespace pacm {
 
 
 typedef LiveCollection<std::string, LocalPackage>    LocalPackageStore;
-typedef LocalPackageStore::Map                        LocalPackageMap;
-typedef LiveCollection<std::string, RemotePackage>    RemotePackageStore;
-typedef RemotePackageStore::Map                        RemotePackageMap;
+typedef LocalPackageStore::Map                       LocalPackageMap;
+typedef LiveCollection<std::string, RemotePackage>   RemotePackageStore;
+typedef RemotePackageStore::Map                      RemotePackageMap;
 
 
 /// The Package Manager provides an interface for managing,
@@ -45,6 +45,7 @@ typedef RemotePackageStore::Map                        RemotePackageMap;
 class PackageManager
 {
 public:
+
     /// Package manager initialization options.
     struct Options
     {
@@ -80,7 +81,8 @@ public:
     PackageManager(const Options& options = Options());
     virtual ~PackageManager();
 
-    ///// Initialization Methods
+    //
+    /// Initialization Methods
 
     virtual void initialize();
     virtual void uninitialize();
@@ -109,8 +111,11 @@ public:
     /// Saves the local package manifest to the file system.
     virtual bool saveLocalPackage(LocalPackage& package, bool whiny = false);
 
+    /// Parse the remote packages from the given JSON data string.
+    virtual void parseRemotePackages(const std::string& data);
 
-    ///// Package Installation Methods
+    //
+    /// Package Installation Methods
 
     /// Installs a single package.
     /// The returned InstallTask must be started.
@@ -163,7 +168,8 @@ public:
     /// will fail.
     virtual bool finalizeInstallations(bool whiny = false);
 
-    ///// Task Helper Methods
+    //
+    /// Task Helper Methods
 
     /// Gets the install task for the given package ID.
     virtual InstallTask::Ptr getInstallTask(const std::string& id) const;
@@ -175,7 +181,8 @@ public:
     /// be aborted before clearing local or remote manifests.
     virtual void cancelAllTasks();
 
-    ///// Package Helper Methods
+    //
+    /// Package Helper Methods
 
     /// Returns all package pairs, valid or invalid.
     /// Some pairs may not have both local and remote package pointers.
@@ -216,7 +223,8 @@ public:
     /// Returns true if there are updates available for this package, false otherwise.
     virtual bool hasAvailableUpdates(const PackagePair& pair) const;
 
-    ///// File Helper Methods
+    //
+    /// File Helper Methods
 
     /// Clears all files in the cache directory.
     void clearCache();
@@ -241,35 +249,37 @@ public:
     /// given package ID.
     std::string getPackageDataDir(const std::string& id);
 
-    ///// Accessors
+    //
+    /// Accessors
 
     virtual Options& options();
     virtual RemotePackageStore& remotePackages();
     virtual LocalPackageStore& localPackages();
 
-    ///// Events
+    //
+    /// Events
 
     /// Signals when the remote package list have been
     /// downloaded from the server.
-    Signal<const http::Response&> RemotePackageResponse;
+    Signal<void(const http::Response&)> RemotePackageResponse;
 
     /// Signals when a package is uninstalled.
-    Signal<LocalPackage&> PackageUninstalled;
+    Signal<void(LocalPackage&)> PackageUninstalled;
 
     /// Signals when an installation task is created,
     /// before it is started.
-    Signal<InstallTask&> InstallTaskCreated;
+    Signal<void(InstallTask&)> InstallTaskCreated;
 
     /// Signals when a package installation tasks completes,
     /// either successfully or in error.
-    Signal<const InstallTask&> InstallTaskComplete;
+    Signal<void(const InstallTask&)> InstallTaskComplete;
 
 protected:
 
-    ///// Callbacks
+    //
+    /// Callbacks
 
-    void onPackageInstallComplete(void* sender);
-    void onPackageQueryResponse(void* sender, const http::Response& response);
+    void onPackageInstallComplete(InstallTask& task);
 
 protected:
     mutable Mutex       _mutex;

@@ -49,20 +49,20 @@ public:
     virtual LocalPackageVec packages() const;
 
     /// Proxies state change events from managed packages
-    Signal3<InstallTask&, const InstallationState&, const InstallationState&> InstallStateChange;
+    Signal<void(InstallTask&, const InstallationState&, const InstallationState&)> InstallStateChange;
 
     /// Signals when a managed install task completes.
-    Signal<LocalPackage&> InstallComplete;
+    Signal<void(LocalPackage&)> InstallComplete;
 
     /// Signals on overall progress update [0-100].
-    Signal<int&> Progress;
+    Signal<void(int&)> Progress;
 
     /// Signals on all tasks complete.
-    Signal<LocalPackageVec&> Complete;
+    Signal<void(LocalPackageVec&)> Complete;
 
 protected:
     virtual void onInstallStateChange(void* sender, InstallationState& state, const InstallationState& oldState);    // Called when a monitored install task completes.
-    virtual void onInstallComplete(void* sender);
+    virtual void onInstallComplete(InstallTask& task);
 
     virtual void setProgress(int value);
 

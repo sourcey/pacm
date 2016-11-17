@@ -35,20 +35,20 @@ void InstallMonitor::onInstallStateChange(void* sender, InstallationState& state
 {
     auto task = reinterpret_cast<InstallTask*>(sender);
 
-    DebugL << "[InstallMonitor] onInstallStateChange: " << task << ": " << state << endl;
+    DebugL << "onInstallStateChange: " << task << ": " << state << endl;
 
-    InstallStateChange.emit(this, *task, state, oldState);
+    InstallStateChange.emit(*task, state, oldState);
 }
 
 
-void InstallMonitor::onInstallComplete(void* sender)
+void InstallMonitor::onInstallComplete(InstallTask& task)
 {
-    auto task = reinterpret_cast<InstallTask*>(sender);
+    // auto task = reinterpret_cast<InstallTask*>(sender);
 
-    DebugL << "[InstallMonitor] Package Install Complete: " << task->state().toString() << endl;
+    DebugL << "Package Install Complete: " << task.state().toString() << endl;
 
     // Notify listeners when each package completes.
-    InstallComplete.emit(this, *task->local());
+    InstallComplete.emit(*task.local());
 
     int progress = 0;
     {
@@ -56,9 +56,9 @@ void InstallMonitor::onInstallComplete(void* sender)
 
         // Remove the package task reference.
         for (auto it = _tasks.begin(); it != _tasks.end(); it++) {
-            if (task == it->get()) {
-                task->StateChange -= sdelegate(this, &InstallMonitor::onInstallStateChange);
-                task->Complete -= sdelegate(this, &InstallMonitor::onInstallComplete);
+            if (&task == it->get()) {
+                task.StateChange -= slot(this, &InstallMonitor::onInstallStateChange);
+                task.Complete -= slot(this, &InstallMonitor::onInstallComplete);
                 _tasks.erase(it);
                 break;
             }
@@ -66,15 +66,14 @@ void InstallMonitor::onInstallComplete(void* sender)
 
         progress = (_packages.size() - _tasks.size()) / _packages.size();
 
-        InfoL << "[InstallMonitor] Waiting on "
-            << _tasks.size() << " packages to complete" << endl;
+        InfoL << "Waiting on " << _tasks.size() << " packages to complete" << endl;
     }
 
     // Set progress
     setProgress(progress);
 
     if (isComplete())
-        Complete.emit(this, _packages);
+        Complete.emit(_packages);
 }
 
 
@@ -85,8 +84,8 @@ void InstallMonitor::addTask(InstallTask::Ptr task)
         throw std::runtime_error("Invalid package task");
     _tasks.push_back(task);
     _packages.push_back(task->_local);
-    task->StateChange += sdelegate(this, &InstallMonitor::onInstallStateChange);
-    task->Complete += sdelegate(this, &InstallMonitor::onInstallComplete);
+    task->StateChange += slot(this, &InstallMonitor::onInstallStateChange);
+    task->Complete += slot(this, &InstallMonitor::onInstallComplete);
 }
 
 
@@ -112,7 +111,7 @@ void InstallMonitor::setProgress(int value)
         Mutex::ScopedLock lock(_mutex);
         _progress = value;
     }
-    Progress.emit(this, value);
+    Progress.emit(value);
 }
 
 
