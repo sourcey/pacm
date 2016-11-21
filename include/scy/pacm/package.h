@@ -22,7 +22,7 @@ namespace pacm {
 
 /// This class is a JSON representation of an
 /// package belonging to the PackageManager.
-struct Package: public json::Value
+struct Package : public json::Value
 {
     /// This class represents a archived file
     /// asset containing files belonging to
@@ -43,8 +43,8 @@ struct Package: public json::Value
 
         virtual void print(std::ostream& ost) const;
 
-        virtual Asset& operator = (const Asset& r);
-        virtual bool operator == (const Asset& r) const;
+        virtual Asset& operator=(const Asset& r);
+        virtual bool operator==(const Asset& r) const;
 
         json::Value& root;
     };
@@ -72,7 +72,7 @@ struct Package: public json::Value
 /// This class is a JSON representation of an
 /// package existing on the remote server that
 /// may be downloaded and installed.
-struct RemotePackage: public Package
+struct RemotePackage : public Package
 {
     RemotePackage();
     RemotePackage(const json::Value& src);
@@ -107,7 +107,7 @@ struct RemotePackage: public Package
 /// This class is a JSON representation of an
 /// installed local package that exists on the
 /// file system.
-struct LocalPackage: public Package
+struct LocalPackage : public Package
 {
     /// This class provides a list of all package
     /// files and their location on the file system.
@@ -118,13 +118,13 @@ struct LocalPackage: public Package
 
         virtual bool empty() const;
 
-        //virtual void addDir(const std::string& path);
+        // virtual void addDir(const std::string& path);
         virtual void addFile(const std::string& path);
 
         json::Value& root;
 
     private:
-        //Manifest& operator = (const Manifest&) {}
+        // Manifest& operator = (const Manifest&) {}
     };
 
     LocalPackage();
@@ -206,7 +206,8 @@ struct LocalPackage: public Package
 
     /// Returns the full full path of the installed file.
     /// Thrown an exception if the install directory is unset.
-    virtual std::string getInstalledFilePath(const std::string& fileName, bool whiny = false);
+    virtual std::string getInstalledFilePath(const std::string& fileName,
+                                             bool whiny = false);
 
     virtual json::Value& errors();
     virtual void addError(const std::string& message);
@@ -236,7 +237,7 @@ struct PackagePair
 
     /// Returns true if there are no possible updates for
     /// this package, false otherwise.
-    //virtual bool hasAvailableUpdates();
+    // virtual bool hasAvailableUpdates();
 
     LocalPackage* local;
     RemotePackage* remote;
@@ -246,9 +247,11 @@ struct PackagePair
 typedef std::vector<PackagePair> PackagePairVec;
 
 
-} } // namespace scy::pacm
+} // namespace pacm
+} // namespace scy
 
 
 #endif // SCY_Pacm_Package_H
+
 
 /// @\}

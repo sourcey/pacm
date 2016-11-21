@@ -10,9 +10,9 @@
 
 
 #include "scy/pacm/package.h"
-#include "scy/util.h"
-#include "scy/logger.h"
 #include "scy/filesystem.h"
+#include "scy/logger.h"
+#include "scy/util.h"
 
 #include "assert.h"
 
@@ -31,8 +31,8 @@ Package::Package()
 }
 
 
-Package::Package(const json::Value& src) :
-    json::Value(src)
+Package::Package(const json::Value& src)
+    : json::Value(src)
 {
 }
 
@@ -44,9 +44,7 @@ Package::~Package()
 
 bool Package::valid() const
 {
-    return !id().empty()
-        && !name().empty()
-        && !type().empty();
+    return !id().empty() && !name().empty() && !type().empty();
 }
 
 
@@ -92,8 +90,8 @@ void Package::print(std::ostream& ost) const
 //
 
 
-Package::Asset::Asset(json::Value& src) :
-    root(src)
+Package::Asset::Asset(json::Value& src)
+    : root(src)
 {
 }
 
@@ -141,9 +139,8 @@ int Package::Asset::fileSize() const
 
 bool Package::Asset::valid() const
 {
-    return root.isMember("file-name")
-        && root.isMember("version")
-        && root.isMember("mirrors");
+    return root.isMember("file-name") && root.isMember("version") &&
+           root.isMember("mirrors");
 }
 
 
@@ -154,18 +151,17 @@ void Package::Asset::print(std::ostream& ost) const
 }
 
 
-Package::Asset& Package::Asset::operator = (const Asset& r)
+Package::Asset& Package::Asset::operator=(const Asset& r)
 {
     root = r.root;
     return *this;
 }
 
 
-bool Package::Asset::operator == (const Asset& r) const
+bool Package::Asset::operator==(const Asset& r) const
 {
-    return fileName() == r.fileName()
-        && version() == r.version()
-        && checksum() == r.checksum();
+    return fileName() == r.fileName() && version() == r.version() &&
+           checksum() == r.checksum();
 }
 
 
@@ -179,8 +175,8 @@ RemotePackage::RemotePackage()
 }
 
 
-RemotePackage::RemotePackage(const json::Value& src) :
-    Package(src)
+RemotePackage::RemotePackage(const json::Value& src)
+    : Package(src)
 {
 }
 
@@ -207,7 +203,8 @@ Package::Asset RemotePackage::latestAsset()
     int index = 0;
     if (assets.size() > 1) {
         for (int i = 1; i < static_cast<int>(assets.size()); i++) {
-            if (util::compareVersion(assets[i]["version"].asString(), assets[index]["version"].asString())) {
+            if (util::compareVersion(assets[i]["version"].asString(),
+                                     assets[index]["version"].asString())) {
                 index = i;
             }
         }
@@ -246,15 +243,18 @@ Package::Asset RemotePackage::latestSDKAsset(const std::string& version)
 
     int index = -1;
     for (int i = 1; i < static_cast<int>(assets.size()); i++) {
-        if (assets[i]["sdk-version"].asString() == version && (index == -1 || (
-            assets[index]["sdk-version"].asString() != version ||
-            util::compareVersion(assets[i]["version"].asString(), assets[index]["version"].asString())))) {
+        if (assets[i]["sdk-version"].asString() == version &&
+            (index == -1 ||
+             (assets[index]["sdk-version"].asString() != version ||
+              util::compareVersion(assets[i]["version"].asString(),
+                                   assets[index]["version"].asString())))) {
             index = i;
         }
     }
 
     if (index == -1)
-        throw std::runtime_error("No package asset with SDK version " + version);
+        throw std::runtime_error("No package asset with SDK version " +
+                                 version);
 
     return Asset(assets[index]);
 }
@@ -270,14 +270,14 @@ LocalPackage::LocalPackage()
 }
 
 
-LocalPackage::LocalPackage(const json::Value& src) :
-    Package(src)
+LocalPackage::LocalPackage(const json::Value& src)
+    : Package(src)
 {
 }
 
 
-LocalPackage::LocalPackage(const RemotePackage& src) :
-    Package(src)
+LocalPackage::LocalPackage(const RemotePackage& src)
+    : Package(src)
 {
     assert(src.valid());
 
@@ -306,12 +306,8 @@ LocalPackage::Manifest LocalPackage::manifest()
 
 void LocalPackage::setState(const std::string& state)
 {
-    assert(
-        state == "Installing" ||
-        state == "Installed" ||
-        state == "Failed" ||
-        state == "Uninstalled"
-    );
+    assert(state == "Installing" || state == "Installed" || state == "Failed" ||
+           state == "Uninstalled");
 
     (*this)["state"] = state;
 }
@@ -326,7 +322,8 @@ void LocalPackage::setInstallState(const std::string& state)
 void LocalPackage::setVersion(const std::string& version)
 {
     if (state() != "Installed")
-        throw std::runtime_error("Package must be installed before the version is set.");
+        throw std::runtime_error(
+            "Package must be installed before the version is set.");
 
     (*this)["version"] = version;
 }
@@ -362,7 +359,8 @@ std::string LocalPackage::installDir() const
 }
 
 
-std::string LocalPackage::getInstalledFilePath(const std::string& fileName, bool whiny)
+std::string LocalPackage::getInstalledFilePath(const std::string& fileName,
+                                               bool whiny)
 {
     std::string dir = installDir();
     if (whiny && dir.empty())
@@ -433,7 +431,8 @@ bool LocalPackage::verifyInstallManifest(bool allowEmpty)
 void LocalPackage::setInstalledAsset(const Package::Asset& installedRemoteAsset)
 {
     if (state() != "Installed")
-        throw std::runtime_error("Package must be installed before asset can be set.");
+        throw std::runtime_error(
+            "Package must be installed before asset can be set.");
 
     if (!installedRemoteAsset.valid())
         throw std::runtime_error("Remote asset is invalid.");
@@ -485,8 +484,8 @@ bool LocalPackage::valid() const
 //
 
 
-LocalPackage::Manifest::Manifest(json::Value& src) :
-    root(src)
+LocalPackage::Manifest::Manifest(json::Value& src)
+    : root(src)
 {
 }
 
@@ -499,10 +498,10 @@ LocalPackage::Manifest::~Manifest()
 void LocalPackage::Manifest::addFile(const std::string& path)
 {
     // Do not allow duplicates
-    //if (!find_child_by_(*this)["file", "path", path.c_str()).empty())
+    // if (!find_child_by_(*this)["file", "path", path.c_str()).empty())
     //    return;
 
-    //json::Value node(path);
+    // json::Value node(path);
     root.append(path);
 }
 
@@ -518,8 +517,9 @@ bool LocalPackage::Manifest::empty() const
 //
 
 
-PackagePair::PackagePair(LocalPackage* local, RemotePackage* remote) :
-    local(local), remote(remote)
+PackagePair::PackagePair(LocalPackage* local, RemotePackage* remote)
+    : local(local)
+    , remote(remote)
 {
 }
 
@@ -552,12 +552,13 @@ bool PackagePair::valid() const
 {
     // Packages must be valid, and
     // must have at least one package.
-    return (!local || local->valid())
-        && (!remote || remote->valid())
-        && (local || remote);
+    return (!local || local->valid()) && (!remote || remote->valid()) &&
+           (local || remote);
 }
 
 
-} } // namespace scy::pacm
+} // namespace pacm
+} // namespace scy
+
 
 /// @\}

@@ -10,8 +10,8 @@
 
 
 #include "scy/pacm/installmonitor.h"
-#include "scy/pacm/packagemanager.h"
 #include "scy/logger.h"
+#include "scy/pacm/packagemanager.h"
 
 
 using namespace std;
@@ -31,7 +31,9 @@ InstallMonitor::~InstallMonitor()
 }
 
 
-void InstallMonitor::onInstallStateChange(void* sender, InstallationState& state, const InstallationState& oldState)
+void InstallMonitor::onInstallStateChange(void* sender,
+                                          InstallationState& state,
+                                          const InstallationState& oldState)
 {
     auto task = reinterpret_cast<InstallTask*>(sender);
 
@@ -57,7 +59,8 @@ void InstallMonitor::onInstallComplete(InstallTask& task)
         // Remove the package task reference.
         for (auto it = _tasks.begin(); it != _tasks.end(); it++) {
             if (&task == it->get()) {
-                task.StateChange -= slot(this, &InstallMonitor::onInstallStateChange);
+                task.StateChange -=
+                    slot(this, &InstallMonitor::onInstallStateChange);
                 task.Complete -= slot(this, &InstallMonitor::onInstallComplete);
                 _tasks.erase(it);
                 break;
@@ -66,7 +69,8 @@ void InstallMonitor::onInstallComplete(InstallTask& task)
 
         progress = (_packages.size() - _tasks.size()) / _packages.size();
 
-        InfoL << "Waiting on " << _tasks.size() << " packages to complete" << endl;
+        InfoL << "Waiting on " << _tasks.size() << " packages to complete"
+              << endl;
     }
 
     // Set progress
@@ -136,6 +140,8 @@ bool InstallMonitor::isComplete() const
 }
 
 
-} } // namespace scy::pacm
+} // namespace pacm
+} // namespace scy
+
 
 /// @\}

@@ -49,7 +49,9 @@ public:
     virtual LocalPackageVec packages() const;
 
     /// Proxies state change events from managed packages
-    Signal<void(InstallTask&, const InstallationState&, const InstallationState&)> InstallStateChange;
+    Signal<void(InstallTask&, const InstallationState&,
+                const InstallationState&)>
+        InstallStateChange;
 
     /// Signals when a managed install task completes.
     Signal<void(LocalPackage&)> InstallComplete;
@@ -61,13 +63,16 @@ public:
     Signal<void(LocalPackageVec&)> Complete;
 
 protected:
-    virtual void onInstallStateChange(void* sender, InstallationState& state, const InstallationState& oldState);    // Called when a monitored install task completes.
+    virtual void onInstallStateChange(
+        void* sender, InstallationState& state,
+        const InstallationState&
+            oldState); // Called when a monitored install task completes.
     virtual void onInstallComplete(InstallTask& task);
 
     virtual void setProgress(int value);
 
 protected:
-    mutable Mutex    _mutex;
+    mutable Mutex _mutex;
     InstallTaskPtrVec _tasks;
     LocalPackageVec _packages;
     int _progress;
@@ -88,9 +93,11 @@ inline std::string getInstallTaskNamesString(LocalPackageVec& packages)
 }
 
 
-} } // namespace scy::pacm
+} // namespace pacm
+} // namespace scy
 
 
 #endif // SCY_Pacm_InstallMonitor_H
+
 
 /// @\}

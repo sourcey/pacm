@@ -35,9 +35,11 @@ namespace pacm {
 #endif
 
 
-} } // namespace scy::pacm
+} // namespace pacm
+} // namespace scy
 
 
 #endif // SCY_Pacm_Config_H
+
 
 /// @\}

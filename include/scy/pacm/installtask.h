@@ -13,11 +13,11 @@
 #define SCY_Pacm_InstallTask_H
 
 
-#include "scy/pacm/package.h"
 #include "scy/http/client.h"
-#include "scy/stateful.h"
-#include "scy/logger.h"
 #include "scy/idler.h"
+#include "scy/logger.h"
+#include "scy/pacm/package.h"
+#include "scy/stateful.h"
 
 
 namespace scy {
@@ -27,7 +27,7 @@ namespace pacm {
 class PackageManager;
 
 
-struct InstallationState: public State
+struct InstallationState : public State
 {
     enum Type
     {
@@ -42,15 +42,23 @@ struct InstallationState: public State
 
     std::string str(unsigned int id) const
     {
-        switch(id) {
-        case None:                    return "None";
-        case Downloading:            return "Downloading";
-        case Extracting:            return "Extracting";
-        case Finalizing:            return "Finalizing";
-        case Installed:                return "Installed";
-        case Cancelled:                return "Cancelled";
-        case Failed:                return "Failed";
-        default: assert(false);
+        switch (id) {
+            case None:
+                return "None";
+            case Downloading:
+                return "Downloading";
+            case Extracting:
+                return "Extracting";
+            case Finalizing:
+                return "Finalizing";
+            case Installed:
+                return "Installed";
+            case Cancelled:
+                return "Cancelled";
+            case Failed:
+                return "Failed";
+            default:
+                assert(false);
         }
         return "undefined";
     }
@@ -59,14 +67,15 @@ struct InstallationState: public State
 /// Package installation options.
 struct InstallOptions
 {
-    std::string version;            ///< If set then the given package version will be installed.
-    std::string sdkVersion;         ///< If set then the latest package version for given SDK
-                                    ///< version will be installed.
-    std::string installDir;         ///< Install to the given location, otherwise the manager default
-                                    ///< installDir will be used.
-    //bool copyManifestToInstallDir;  ///< Copies the local package.json file to the install directory.
+    std::string version;    ///< If set then the given package version
+                            ///< will be installed.
+    std::string sdkVersion; ///< If set then the latest package version for given SDK
+                            ///< version will be installed.
+    std::string installDir; ///< Install to the given location, otherwise the
+                            ///< manager default `installDir` will be used.
 
-    InstallOptions() {
+    InstallOptions()
+    {
         version = "";
         sdkVersion = "";
         installDir = "";
@@ -75,15 +84,13 @@ struct InstallOptions
 
 
 /// This class implements the package installation procedure.
-class InstallTask:
-    public async::Runnable,
-    public Stateful<InstallationState>
+class InstallTask : public async::Runnable, public Stateful<InstallationState>
 {
 public:
     typedef std::shared_ptr<InstallTask> Ptr;
 
-    InstallTask(PackageManager& manager,
-                LocalPackage* local, RemotePackage* remote,
+    InstallTask(PackageManager& manager, LocalPackage* local,
+                RemotePackage* remote,
                 const InstallOptions& options = InstallOptions(),
                 uv::Loop* loop = uv::defaultLoop());
     virtual ~InstallTask();
@@ -133,25 +140,26 @@ protected:
     /// do the work.
     virtual void run();
 
-    virtual void onStateChange(InstallationState& state, const InstallationState& oldState);
+    virtual void onStateChange(InstallationState& state,
+                               const InstallationState& oldState);
     virtual void onDownloadProgress(const double& progress);
     virtual void onDownloadComplete(const http::Response& response);
 
     virtual void setProgress(int value);
 
 protected:
-    mutable Mutex    _mutex;
+    mutable Mutex _mutex;
 
-    Idler            _runner;
-    //Thread          _thread;
+    Idler _runner;
+    scy::Error _error;
     PackageManager& _manager;
-    LocalPackage*    _local;
-    RemotePackage*    _remote;
-    InstallOptions    _options;
-    int             _progress;
-    bool            _downloading;
+    LocalPackage* _local;
+    RemotePackage* _remote;
+    InstallOptions _options;
+    int _progress;
+    bool _downloading;
     http::ClientConnection::Ptr _dlconn;
-    uv::Loop*       _loop;
+    uv::Loop* _loop;
 
     friend class PackageManager;
     friend class InstallMonitor;
@@ -162,9 +170,11 @@ typedef std::vector<InstallTask*> InstallTaskVec;
 typedef std::vector<InstallTask::Ptr> InstallTaskPtrVec;
 
 
-} } // namespace scy::pacm
+} // namespace pacm
+} // namespace scy
 
 
 #endif // SCY_Pacm_InstallTask_H
+
 
 /// @\}

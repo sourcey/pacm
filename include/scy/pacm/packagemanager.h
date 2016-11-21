@@ -13,31 +13,31 @@
 #define SCY_Pacm_PackageManager_H
 
 
-#include "scy/pacm/config.h"
-#include "scy/pacm/types.h"
-#include "scy/pacm/package.h"
-#include "scy/pacm/installtask.h"
-#include "scy/pacm/installmonitor.h"
 #include "scy/collection.h"
 #include "scy/filesystem.h"
+#include "scy/json/json.h"
+#include "scy/pacm/config.h"
+#include "scy/pacm/installmonitor.h"
+#include "scy/pacm/installtask.h"
+#include "scy/pacm/package.h"
+#include "scy/pacm/types.h"
 #include "scy/platform.h"
 #include "scy/stateful.h"
 #include "scy/task.h"
-#include "scy/json/json.h"
 
-#include <iostream>
-#include <fstream>
 #include <assert.h>
+#include <fstream>
+#include <iostream>
 
 
 namespace scy {
 namespace pacm {
 
 
-typedef LiveCollection<std::string, LocalPackage>    LocalPackageStore;
-typedef LocalPackageStore::Map                       LocalPackageMap;
-typedef LiveCollection<std::string, RemotePackage>   RemotePackageStore;
-typedef RemotePackageStore::Map                      RemotePackageMap;
+typedef LiveCollection<std::string, LocalPackage> LocalPackageStore;
+typedef LocalPackageStore::Map LocalPackageMap;
+typedef LiveCollection<std::string, RemotePackage> RemotePackageStore;
+typedef RemotePackageStore::Map RemotePackageMap;
 
 
 /// The Package Manager provides an interface for managing,
@@ -45,35 +45,39 @@ typedef RemotePackageStore::Map                      RemotePackageMap;
 class PackageManager
 {
 public:
-
     /// Package manager initialization options.
     struct Options
     {
-        std::string endpoint;           ///< The HTTP server endpoint
-        std::string indexURI;           ///< The HTTP server URI for querying packages JSON
-        std::string httpUsername;       ///< Username for HTTP basic auth
-        std::string httpPassword;       ///< PAssword for HTTP basic auth
-        std::string httpOAuthToken;     ///< Will be used instead of HTTP basic if provided
+        std::string endpoint; ///< The HTTP server endpoint
+        std::string
+            indexURI; ///< The HTTP server URI for querying packages JSON
+        std::string httpUsername; ///< Username for HTTP basic auth
+        std::string httpPassword; ///< PAssword for HTTP basic auth
+        std::string
+            httpOAuthToken; ///< Will be used instead of HTTP basic if provided
 
-        std::string tempDir;            ///< Directory where package files will be downloaded and extracted
-        std::string dataDir;            ///< Directory where package manifests will be kept
-        std::string installDir;         ///< Directory where packages will be installed
+        std::string tempDir; ///< Directory where package files will be
+                             ///downloaded and extracted
+        std::string dataDir; ///< Directory where package manifests will be kept
+        std::string installDir; ///< Directory where packages will be installed
 
-        std::string platform;           ///< Platform (win32, linux, mac)
-        std::string checksumAlgorithm;  ///< Checksum algorithm (MDS/SHA1)
+        std::string platform;          ///< Platform (win32, linux, mac)
+        std::string checksumAlgorithm; ///< Checksum algorithm (MDS/SHA1)
 
-        bool clearFailedCache;          ///< This flag tells the package manager weather or not
-                                        ///< to clear the package cache if installation fails.
+        bool clearFailedCache; ///< This flag tells the package manager weather
+                               ///or not
+        ///< to clear the package cache if installation fails.
 
-        Options(const std::string& root = getCwd()) {
-            tempDir                 = root + fs::separator + DEFAULT_PACKAGE_TEMP_DIR;
-            dataDir                 = root + fs::separator + DEFAULT_PACKAGE_DATA_DIR;
-            installDir              = root + fs::separator + DEFAULT_PACKAGE_INSTALL_DIR;
-            endpoint                = DEFAULT_API_ENDPOINT;
-            indexURI                = DEFAULT_API_INDEX_URI;
-            platform                = DEFAULT_PLATFORM;
-            checksumAlgorithm       = DEFAULT_CHECKSUM_ALGORITHM;
-            clearFailedCache        = true;
+        Options(const std::string& root = getCwd())
+        {
+            tempDir = root + fs::separator + DEFAULT_PACKAGE_TEMP_DIR;
+            dataDir = root + fs::separator + DEFAULT_PACKAGE_DATA_DIR;
+            installDir = root + fs::separator + DEFAULT_PACKAGE_INSTALL_DIR;
+            endpoint = DEFAULT_API_ENDPOINT;
+            indexURI = DEFAULT_API_INDEX_URI;
+            platform = DEFAULT_PLATFORM;
+            checksumAlgorithm = DEFAULT_CHECKSUM_ALGORITHM;
+            clearFailedCache = true;
         }
     };
 
@@ -121,32 +125,38 @@ public:
     /// The returned InstallTask must be started.
     /// If the package is already up-to-date, a nullptr will be returned.
     /// Any other error will throw a std::runtime_error.
-    virtual InstallTask::Ptr installPackage(const std::string& name,
-        const InstallOptions& options = InstallOptions()); //, bool whiny = false
+    virtual InstallTask::Ptr
+    installPackage(const std::string& name,
+                   const InstallOptions& options =
+                       InstallOptions()); //, bool whiny = false
 
     /// Installs multiple packages.
     /// The same options will be passed to each task.
     /// If a InstallMonitor instance was passed in the tasks will need to
     /// be started, otherwise they will be auto-started.
     /// The PackageManager does not take ownership of the InstallMonitor.
-    virtual bool installPackages(const StringVec& ids,
-        const InstallOptions& options = InstallOptions(),
-        InstallMonitor* monitor = nullptr, bool whiny = false);
+    virtual bool
+    installPackages(const StringVec& ids,
+                    const InstallOptions& options = InstallOptions(),
+                    InstallMonitor* monitor = nullptr, bool whiny = false);
 
     /// Updates a single package.
     /// Throws an exception if the package does not exist.
     /// The returned InstallTask must be started.
-    virtual InstallTask::Ptr updatePackage(const std::string& name,
-        const InstallOptions& options = InstallOptions()); //, bool whiny = false
+    virtual InstallTask::Ptr
+    updatePackage(const std::string& name,
+                  const InstallOptions& options =
+                      InstallOptions()); //, bool whiny = false
 
     /// Updates multiple packages.
     /// Throws an exception if the package does not exist.
     /// If a InstallMonitor instance was passed in the tasks will need to
     /// be started, otherwise they will be auto-started.
     /// The PackageManager does not take ownership of the InstallMonitor.
-    virtual bool updatePackages(const StringVec& ids,
-        const InstallOptions& options = InstallOptions(),
-        InstallMonitor* monitor = nullptr, bool whiny = false);
+    virtual bool
+    updatePackages(const StringVec& ids,
+                   const InstallOptions& options = InstallOptions(),
+                   InstallMonitor* monitor = nullptr, bool whiny = false);
 
     /// Updates all installed packages.
     virtual bool updateAllPackages(bool whiny = false);
@@ -196,7 +206,8 @@ public:
     /// Returns a local and remote package pair.
     /// An exception will be thrown if either the local or
     /// remote packages aren't available or are invalid.
-    virtual PackagePair getPackagePair(const std::string& id, bool whiny = false) const;
+    virtual PackagePair getPackagePair(const std::string& id,
+                                       bool whiny = false) const;
 
     /// Returns a local and remote package pair.
     /// If the local package doesn't exist it will be created
@@ -206,8 +217,9 @@ public:
     virtual PackagePair getOrCreatePackagePair(const std::string& id);
 
     /// Creates a package installation task for the given pair.
-    virtual InstallTask::Ptr createInstallTask(PackagePair& pair,
-        const InstallOptions& options = InstallOptions());
+    virtual InstallTask::Ptr
+    createInstallTask(PackagePair& pair,
+                      const InstallOptions& options = InstallOptions());
 
     /// Returns the version number of an installed package.
     /// Exceptions will be thrown if the package does not exist,
@@ -217,10 +229,12 @@ public:
     /// Returns the best asset to install, or throws a descriptive exception
     /// if no updates are available, or if the package is already up-to-date.
     /// This method takes version and SDK locks into consideration.
-    virtual Package::Asset getLatestInstallableAsset(const PackagePair& pair,
+    virtual Package::Asset getLatestInstallableAsset(
+        const PackagePair& pair,
         const InstallOptions& options = InstallOptions()) const;
 
-    /// Returns true if there are updates available for this package, false otherwise.
+    /// Returns true if there are updates available for this package, false
+    /// otherwise.
     virtual bool hasAvailableUpdates(const PackagePair& pair) const;
 
     //
@@ -275,25 +289,25 @@ public:
     Signal<void(const InstallTask&)> InstallTaskComplete;
 
 protected:
-
     //
     /// Callbacks
 
     void onPackageInstallComplete(InstallTask& task);
 
 protected:
-    mutable Mutex       _mutex;
-    LocalPackageStore   _localPackages;
-    RemotePackageStore  _remotePackages;
-    InstallTaskPtrVec   _tasks;
-    Options             _options;
+    mutable Mutex _mutex;
+    LocalPackageStore _localPackages;
+    RemotePackageStore _remotePackages;
+    InstallTaskPtrVec _tasks;
+    Options _options;
 };
 
 
-
-} } // namespace scy::pacm
+} // namespace pacm
+} // namespace scy
 
 
 #endif // SCY_Pacm_PackageManager_H
+
 
 /// @\}

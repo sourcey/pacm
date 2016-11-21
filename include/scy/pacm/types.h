@@ -17,9 +17,11 @@ namespace scy {
 namespace pacm {
 
 
-} } // namespace scy::pacm
+} // namespace pacm
+} // namespace scy
 
 
 #endif // SCY_Pacm_Types_H
+
 
 /// @\}
