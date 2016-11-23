@@ -54,7 +54,7 @@ void InstallMonitor::onInstallComplete(InstallTask& task)
 
     int progress = 0;
     {
-        Mutex::ScopedLock lock(_mutex);
+        std::lock_guard<std::mutex> guard(_mutex);
 
         // Remove the package task reference.
         for (auto it = _tasks.begin(); it != _tasks.end(); it++) {
@@ -83,7 +83,7 @@ void InstallMonitor::onInstallComplete(InstallTask& task)
 
 void InstallMonitor::addTask(InstallTask::Ptr task)
 {
-    Mutex::ScopedLock lock(_mutex);
+    std::lock_guard<std::mutex> guard(_mutex);
     if (!task->valid())
         throw std::runtime_error("Invalid package task");
     _tasks.push_back(task);
@@ -95,7 +95,7 @@ void InstallMonitor::addTask(InstallTask::Ptr task)
 
 void InstallMonitor::startAll()
 {
-    Mutex::ScopedLock lock(_mutex);
+    std::lock_guard<std::mutex> guard(_mutex);
     for (auto it = _tasks.begin(); it != _tasks.end(); it++)
         (*it)->start();
 }
@@ -103,7 +103,7 @@ void InstallMonitor::startAll()
 
 void InstallMonitor::cancelAll()
 {
-    Mutex::ScopedLock lock(_mutex);
+    std::lock_guard<std::mutex> guard(_mutex);
     for (auto it = _tasks.begin(); it != _tasks.end(); it++)
         (*it)->cancel();
 }
@@ -112,7 +112,7 @@ void InstallMonitor::cancelAll()
 void InstallMonitor::setProgress(int value)
 {
     {
-        Mutex::ScopedLock lock(_mutex);
+        std::lock_guard<std::mutex> guard(_mutex);
         _progress = value;
     }
     Progress.emit(value);
@@ -121,21 +121,21 @@ void InstallMonitor::setProgress(int value)
 
 InstallTaskPtrVec InstallMonitor::tasks() const
 {
-    Mutex::ScopedLock lock(_mutex);
+    std::lock_guard<std::mutex> guard(_mutex);
     return _tasks;
 }
 
 
 LocalPackageVec InstallMonitor::packages() const
 {
-    Mutex::ScopedLock lock(_mutex);
+    std::lock_guard<std::mutex> guard(_mutex);
     return _packages;
 }
 
 
 bool InstallMonitor::isComplete() const
 {
-    Mutex::ScopedLock lock(_mutex);
+    std::lock_guard<std::mutex> guard(_mutex);
     return _tasks.empty();
 }
 

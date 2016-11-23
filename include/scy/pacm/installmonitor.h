@@ -72,7 +72,7 @@ protected:
     virtual void setProgress(int value);
 
 protected:
-    mutable Mutex _mutex;
+    mutable std::mutex _mutex;
     InstallTaskPtrVec _tasks;
     LocalPackageVec _packages;
     int _progress;

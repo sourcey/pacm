@@ -45,7 +45,7 @@ void PackageManager::initialize()
 
 bool PackageManager::initialized() const
 {
-    Mutex::ScopedLock lock(_mutex);
+    std::lock_guard<std::mutex> guard(_mutex);
     return !_remotePackages.empty() || !_localPackages.empty();
 }
 
@@ -54,7 +54,7 @@ void PackageManager::uninitialize()
 {
     cancelAllTasks();
 
-    Mutex::ScopedLock lock(_mutex);
+    std::lock_guard<std::mutex> guard(_mutex);
     _remotePackages.clear();
     _localPackages.clear();
 }
@@ -62,7 +62,7 @@ void PackageManager::uninitialize()
 
 void PackageManager::cancelAllTasks()
 {
-    Mutex::ScopedLock lock(_mutex);
+    std::lock_guard<std::mutex> guard(_mutex);
     auto it = _tasks.begin();
     while (it != _tasks.end()) {
         (*it)->cancel();
@@ -73,7 +73,7 @@ void PackageManager::cancelAllTasks()
 
 void PackageManager::createDirectories()
 {
-    Mutex::ScopedLock lock(_mutex);
+    std::lock_guard<std::mutex> guard(_mutex);
     fs::mkdirr(_options.tempDir);
     fs::mkdirr(_options.dataDir);
     fs::mkdirr(_options.installDir);
@@ -82,7 +82,7 @@ void PackageManager::createDirectories()
 
 void PackageManager::queryRemotePackages()
 {
-    Mutex::ScopedLock lock(_mutex);
+    std::lock_guard<std::mutex> guard(_mutex);
     DebugL << "Querying server: " << _options.endpoint << _options.indexURI
            << endl;
 
@@ -157,7 +157,7 @@ void PackageManager::loadLocalPackages()
 {
     std::string dir;
     {
-        Mutex::ScopedLock lock(_mutex);
+        std::lock_guard<std::mutex> guard(_mutex);
 
         if (!_tasks.empty())
             throw std::runtime_error(
@@ -595,7 +595,7 @@ PackageManager::createInstallTask(PackagePair& pair,
     task->Complete += slot(this, &PackageManager::onPackageInstallComplete, -1,
                            -1); // lowest priority to remove task
     {
-        Mutex::ScopedLock lock(_mutex);
+        std::lock_guard<std::mutex> guard(_mutex);
         _tasks.push_back(task);
     }
     InstallTaskCreated.emit(*task);
@@ -605,7 +605,7 @@ PackageManager::createInstallTask(PackagePair& pair,
 
 bool PackageManager::hasUnfinalizedPackages()
 {
-    // Mutex::ScopedLock lock(_mutex);
+   
 
     DebugL << "checking for unfinalized packages" << endl;
 
@@ -680,7 +680,7 @@ void PackageManager::onPackageInstallComplete(InstallTask& task)
 
     // Remove the task reference
     {
-        Mutex::ScopedLock lock(_mutex);
+        std::lock_guard<std::mutex> guard(_mutex);
         for (auto it = _tasks.begin(); it != _tasks.end(); it++) {
             if (it->get() == &task) {
                 _tasks.erase(it);
@@ -697,7 +697,7 @@ void PackageManager::onPackageInstallComplete(InstallTask& task)
 
 InstallTask::Ptr PackageManager::getInstallTask(const std::string& id) const
 {
-    Mutex::ScopedLock lock(_mutex);
+    std::lock_guard<std::mutex> guard(_mutex);
     for (auto it = _tasks.begin(); it != _tasks.end(); it++) {
         if ((*it)->remote()->id() == id)
             return *it;
@@ -708,7 +708,7 @@ InstallTask::Ptr PackageManager::getInstallTask(const std::string& id) const
 
 InstallTaskPtrVec PackageManager::tasks() const
 {
-    Mutex::ScopedLock lock(_mutex);
+    std::lock_guard<std::mutex> guard(_mutex);
     return _tasks;
 }
 
@@ -720,7 +720,7 @@ InstallTaskPtrVec PackageManager::tasks() const
 PackagePair PackageManager::getPackagePair(const std::string& id,
                                            bool whiny) const
 {
-    Mutex::ScopedLock lock(_mutex);
+    std::lock_guard<std::mutex> guard(_mutex);
     auto local = _localPackages.get(id, false);
     auto remote = _remotePackages.get(id, false);
 
@@ -737,7 +737,7 @@ PackagePair PackageManager::getPackagePair(const std::string& id,
 PackagePairVec PackageManager::getPackagePairs() const
 {
     PackagePairVec pairs;
-    Mutex::ScopedLock lock(_mutex);
+    std::lock_guard<std::mutex> guard(_mutex);
     auto lpackages = _localPackages.map();  // copy
     auto rpackages = _remotePackages.map(); // copy
     for (auto lit = lpackages.begin(); lit != lpackages.end(); ++lit) {
@@ -774,7 +774,7 @@ PackagePairVec PackageManager::getUpdatablePackagePairs() const
 
 PackagePair PackageManager::getOrCreatePackagePair(const std::string& id)
 {
-    Mutex::ScopedLock lock(_mutex);
+    std::lock_guard<std::mutex> guard(_mutex);
     auto remote = _remotePackages.get(id, false);
     if (!remote)
         throw std::runtime_error("The remote package does not exist.");
@@ -804,7 +804,7 @@ PackagePair PackageManager::getOrCreatePackagePair(const std::string& id)
 
 string PackageManager::installedPackageVersion(const std::string& id) const
 {
-    Mutex::ScopedLock lock(_mutex);
+    std::lock_guard<std::mutex> guard(_mutex);
     auto local = _localPackages.get(id, true);
 
     if (!local->valid())
@@ -925,21 +925,21 @@ std::string PackageManager::getPackageDataDir(const std::string& id)
 
 PackageManager::Options& PackageManager::options()
 {
-    Mutex::ScopedLock lock(_mutex);
+    std::lock_guard<std::mutex> guard(_mutex);
     return _options;
 }
 
 
 RemotePackageStore& PackageManager::remotePackages()
 {
-    Mutex::ScopedLock lock(_mutex);
+    std::lock_guard<std::mutex> guard(_mutex);
     return _remotePackages;
 }
 
 
 LocalPackageStore& PackageManager::localPackages()
 {
-    Mutex::ScopedLock lock(_mutex);
+    std::lock_guard<std::mutex> guard(_mutex);
     return _localPackages;
 }
 

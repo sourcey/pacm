@@ -96,7 +96,7 @@ void InstallTask::start()
     if (_manager.options().clearFailedCache)
         _manager.clearPackageCache(*_local);
 
-    _runner.start(*this);
+    _runner.start(std::bind(&InstallTask::run, this));
 
     // Increment the event loop while the task active
     _runner.handle().ref();
@@ -362,7 +362,7 @@ void InstallTask::doFinalize()
 void InstallTask::setComplete()
 {
     {
-        // Mutex::ScopedLock lock(_mutex);
+
         assert(_progress == 100);
 
         InfoL << "Package installed: "
@@ -376,7 +376,7 @@ void InstallTask::setComplete()
 
     // Close the connection
     {
-        // Mutex::ScopedLock lock(_mutex);
+
         if (_dlconn)
             _dlconn->close();
     }
@@ -394,7 +394,7 @@ void InstallTask::setComplete()
 void InstallTask::setProgress(int value)
 {
     {
-        // Mutex::ScopedLock lock(_mutex);
+
         _progress = value;
     }
     Progress.emit(*this, value);
@@ -403,7 +403,7 @@ void InstallTask::setProgress(int value)
 
 Package::Asset InstallTask::getRemoteAsset() const
 {
-    // Mutex::ScopedLock lock(_mutex);
+
     return !_options.version.empty()
                ? _remote->assetVersion(_options.version)
                : !_options.sdkVersion.empty()
@@ -414,14 +414,14 @@ Package::Asset InstallTask::getRemoteAsset() const
 
 int InstallTask::progress() const
 {
-    // Mutex::ScopedLock lock(_mutex);
+
     return _progress;
 }
 
 
 bool InstallTask::valid() const
 {
-    // Mutex::ScopedLock lock(_mutex);
+
     return !stateEquals(InstallationState::Failed) && _local->valid() &&
            (!_remote || _remote->valid());
 }
@@ -455,28 +455,28 @@ bool InstallTask::complete() const
 
 LocalPackage* InstallTask::local() const
 {
-    // Mutex::ScopedLock lock(_mutex);
+
     return _local;
 }
 
 
 RemotePackage* InstallTask::remote() const
 {
-    // Mutex::ScopedLock lock(_mutex);
+
     return _remote;
 }
 
 
 InstallOptions& InstallTask::options()
 {
-    // Mutex::ScopedLock lock(_mutex);
+
     return _options;
 }
 
 
 uv::Loop* InstallTask::loop() const
 {
-    // Mutex::ScopedLock lock(_mutex);
+
     return _loop;
 }
 

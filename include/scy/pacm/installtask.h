@@ -84,7 +84,7 @@ struct InstallOptions
 
 
 /// This class implements the package installation procedure.
-class InstallTask : public async::Runnable, public Stateful<InstallationState>
+class InstallTask : public basic::Runnable, public Stateful<InstallationState>
 {
 public:
     typedef std::shared_ptr<InstallTask> Ptr;
@@ -148,7 +148,7 @@ protected:
     virtual void setProgress(int value);
 
 protected:
-    mutable Mutex _mutex;
+    mutable std::mutex _mutex;
 
     Idler _runner;
     scy::Error _error;

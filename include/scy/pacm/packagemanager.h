@@ -295,7 +295,7 @@ protected:
     void onPackageInstallComplete(InstallTask& task);
 
 protected:
-    mutable Mutex _mutex;
+    mutable std::mutex _mutex;
     LocalPackageStore _localPackages;
     RemotePackageStore _remotePackages;
     InstallTaskPtrVec _tasks;
