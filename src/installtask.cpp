@@ -28,7 +28,7 @@ namespace scy {
 namespace pacm {
 
 
-InstallTask::InstallTask(PackageManager& manager, LocalPackage* local, RemotePackage* remote, 
+InstallTask::InstallTask(PackageManager& manager, LocalPackage* local, RemotePackage* remote,
                          const InstallOptions& options, uv::Loop* loop)
     : _manager(manager)
     , _local(local)
