@@ -3,7 +3,7 @@
 // LibSourcey
 // Copyright (c) 2005, Sourcey <http://sourcey.com>
 //
-// SPDX-License-Identifier:	LGPL-2.1+
+// SPDX-License-Identifier: LGPL-2.1+
 //
 /// @addtogroup pacm
 /// @{
@@ -23,7 +23,7 @@ namespace pacm {
 typedef std::vector<LocalPackage*> LocalPackageVec;
 
 
-class InstallMonitor
+class SCY_EXTERN InstallMonitor
 {
 public:
     InstallMonitor();

@@ -3,7 +3,7 @@
 // LibSourcey
 // Copyright (c) 2005, Sourcey <http://sourcey.com>
 //
-// SPDX-License-Identifier:	LGPL-2.1+
+// SPDX-License-Identifier: LGPL-2.1+
 //
 /// @addtogroup pacm
 /// @{
@@ -24,7 +24,7 @@ namespace scy {
 namespace pacm {
 
 
-class PackageManager;
+class SCY_EXTERN PackageManager;
 
 
 struct InstallationState : public State
@@ -67,8 +67,7 @@ struct InstallationState : public State
 /// Package installation options.
 struct InstallOptions
 {
-    std::string version;    ///< If set then the given package version
-                            ///< will be installed.
+    std::string version;    ///< If set then the given package version will be installed.
     std::string sdkVersion; ///< If set then the latest package version for given SDK
                             ///< version will be installed.
     std::string installDir; ///< Install to the given location, otherwise the
@@ -84,13 +83,12 @@ struct InstallOptions
 
 
 /// This class implements the package installation procedure.
-class InstallTask : public basic::Runnable, public Stateful<InstallationState>
+class SCY_EXTERN InstallTask : public basic::Runnable, public Stateful<InstallationState>
 {
 public:
     typedef std::shared_ptr<InstallTask> Ptr;
 
-    InstallTask(PackageManager& manager, LocalPackage* local,
-                RemotePackage* remote,
+    InstallTask(PackageManager& manager, LocalPackage* local, RemotePackage* remote,
                 const InstallOptions& options = InstallOptions(),
                 uv::Loop* loop = uv::defaultLoop());
     virtual ~InstallTask();
@@ -136,8 +134,7 @@ public:
     Signal<void(InstallTask&)> Complete;
 
 protected:
-    /// Called asynchronously by the thread to
-    /// do the work.
+    /// Called asynchronously by the thread to do the work.
     virtual void run();
 
     virtual void onStateChange(InstallationState& state,

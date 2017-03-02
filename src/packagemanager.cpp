@@ -3,7 +3,7 @@
 // LibSourcey
 // Copyright (c) 2005, Sourcey <http://sourcey.com>
 //
-// SPDX-License-Identifier:	LGPL-2.1+
+// SPDX-License-Identifier: LGPL-2.1+
 //
 /// @addtogroup pacm
 /// @{
@@ -83,16 +83,13 @@ void PackageManager::createDirectories()
 void PackageManager::queryRemotePackages()
 {
     std::lock_guard<std::mutex> guard(_mutex);
-    DebugL << "Querying server: " << _options.endpoint << _options.indexURI
-           << endl;
+    DebugL << "Querying server: " << _options.endpoint << _options.indexURI << endl;
 
     if (!_tasks.empty())
-        throw std::runtime_error(
-            "Cannot load packages while tasks are active.");
+        throw std::runtime_error("Cannot load packages while tasks are active.");
 
     try {
-        auto conn = http::Client::instance().createConnection(
-            _options.endpoint + _options.indexURI);
+        auto conn = http::Client::instance().createConnection(_options.endpoint + _options.indexURI);
         conn->request().setMethod("GET");
         conn->request().setKeepAlive(false);
         conn->setReadStream(new std::stringstream);
@@ -130,10 +127,8 @@ void PackageManager::queryRemotePackages()
 
 void PackageManager::parseRemotePackages(const std::string& data)
 {
-    json::Value root;
-    json::Reader reader;
-    bool ok = reader.parse(data, root);
-    if (ok) {
+    try {
+        json::value root = json::value::parse(data.begin(), data.end());
         _remotePackages.clear();
 
         for (auto it = root.begin(); it != root.end(); it++) {
@@ -145,10 +140,10 @@ void PackageManager::parseRemotePackages(const std::string& data)
             }
             _remotePackages.add(package->id(), package);
         }
-    } else {
-        // TODO: Set error state
-        ErrorL << "Invalid server JSON response: "
-               << reader.getFormattedErrorMessages() << endl;
+    }
+    catch (std::invalid_argument& exc) {
+        ErrorL << "Invalid server JSON response: " << exc.what() << endl;
+        throw exc;
     }
 }
 
@@ -182,7 +177,7 @@ void PackageManager::loadLocalPackages(const std::string& dir)
             try {
                 std::string path(dir);
                 fs::addnode(path, nodes[i]);
-                json::Value root;
+                json::value root;
                 json::loadFile(path, root);
 
                 DebugL << "Loading package manifest: " << path << endl;
@@ -263,7 +258,7 @@ PackageManager::installPackage(const std::string& name,
         // a better way of sending the asset/version to the InstallTask.
         opts.version = asset.version();
 
-        DebugL << "Installing asset: " << asset.root.toStyledString() << endl;
+        DebugL << "Installing asset: " << asset.root.dump(4) << endl;
     } catch (std::exception& exc) {
         WarnL << "No installable assets: " << exc.what() << endl;
         return nullptr;
@@ -520,8 +515,7 @@ bool PackageManager::uninstallPackage(const std::string& id, bool whiny)
             if (!manifest.empty()) {
                 for (auto it = manifest.root.begin(); it != manifest.root.end();
                      it++) {
-                    std::string path(
-                        package->getInstalledFilePath((*it).asString()));
+                    std::string path(package->getInstalledFilePath((*it).get<std::string>()));
                     DebugL << "Delete file: " << path << endl;
                     try {
                         fs::unlink(path);
@@ -579,21 +573,16 @@ bool PackageManager::uninstallPackages(const StringVec& ids, bool whiny)
 }
 
 
-InstallTask::Ptr
-PackageManager::createInstallTask(PackagePair& pair,
-                                  const InstallOptions& options)
+InstallTask::Ptr PackageManager::createInstallTask(PackagePair& pair, const InstallOptions& options)
 {
     InfoL << "Create install task: " << pair.name() << endl;
 
     // Ensure we only have one task per package
     if (getInstallTask(pair.remote->id()))
-        throw std::runtime_error(pair.remote->name() +
-                                 " is already installing.");
+        throw std::runtime_error(pair.remote->name() + " is already installing.");
 
-    auto task =
-        std::make_shared<InstallTask>(*this, pair.local, pair.remote, options);
-    task->Complete += slot(this, &PackageManager::onPackageInstallComplete, -1,
-                           -1); // lowest priority to remove task
+    auto task = std::make_shared<InstallTask>(*this, pair.local, pair.remote, options);
+    task->Complete += slot(this, &PackageManager::onPackageInstallComplete, -1, -1); // lowest priority to remove task
     {
         std::lock_guard<std::mutex> guard(_mutex);
         _tasks.push_back(task);
@@ -605,8 +594,6 @@ PackageManager::createInstallTask(PackagePair& pair,
 
 bool PackageManager::hasUnfinalizedPackages()
 {
-   
-
     DebugL << "checking for unfinalized packages" << endl;
 
     bool res = false;
@@ -833,7 +820,7 @@ bool PackageManager::verifyInstallManifest(LocalPackage& package)
     // Check file system for each manifest file
     LocalPackage::Manifest manifest = package.manifest();
     for (auto it = manifest.root.begin(); it != manifest.root.end(); it++) {
-        std::string path = package.getInstalledFilePath((*it).asString(), false);
+        std::string path = package.getInstalledFilePath((*it).get<std::string>(), false);
         DebugL << package.name()
             << ": Checking: " << path << endl;
         File file(path);
@@ -864,7 +851,7 @@ void PackageManager::clearCache()
 bool PackageManager::clearPackageCache(LocalPackage& package)
 {
     bool res = true;
-    json::Value& assets = package["assets"];
+    json::value& assets = package["assets"];
     for (unsigned i = 0; i < assets.size(); i++) {
         Package::Asset asset(assets[i]);
         if (!clearCacheFile(asset.fileName(), false))

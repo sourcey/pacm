@@ -3,7 +3,7 @@
 // LibSourcey
 // Copyright (c) 2005, Sourcey <http://sourcey.com>
 //
-// SPDX-License-Identifier:	LGPL-2.1+
+// SPDX-License-Identifier: LGPL-2.1+
 //
 /// @addtogroup pacm
 /// @{
@@ -28,9 +28,8 @@ namespace scy {
 namespace pacm {
 
 
-InstallTask::InstallTask(PackageManager& manager, LocalPackage* local,
-                         RemotePackage* remote, const InstallOptions& options,
-                         uv::Loop* loop)
+InstallTask::InstallTask(PackageManager& manager, LocalPackage* local, RemotePackage* remote, 
+                         const InstallOptions& options, uv::Loop* loop)
     : _manager(manager)
     , _local(local)
     , _remote(remote)
@@ -64,11 +63,11 @@ void InstallTask::start()
     // Check against provided options to make sure that
     // we can proceed with task creation.
     if (!_options.version.empty()) {
-        _remote->assetVersion(_options.version);
-    } // throw if none
+        _remote->assetVersion(_options.version); // throw if none
+    }
     if (!_options.sdkVersion.empty()) {
-        _remote->latestSDKAsset(_options.sdkVersion);
-    } // throw if none
+        _remote->latestSDKAsset(_options.sdkVersion); // throw if none
+    }
 
     // Set default install directory if none was given
     if (_options.installDir.empty()) {
@@ -168,8 +167,7 @@ void InstallTask::run()
 }
 
 
-void InstallTask::onStateChange(InstallationState& state,
-                                const InstallationState& oldState)
+void InstallTask::onStateChange(InstallationState& state, const InstallationState& oldState)
 {
     DebugL << "State changed: " << oldState << " => " << state << endl;
 
@@ -191,8 +189,8 @@ void InstallTask::doDownload()
 
     // If the remote asset already exists in the cache, we can
     // skip the download.
-    /* // force file re-download until os get file size is fixed and we can
-    match crc
+    /* 
+    // force file re-download until os get file size is fixed and we can match crc
     if (_manager.hasCachedFile(asset)) {
         DebugL << "file exists, skipping download" << endl;
         setState(this, InstallationState::Extracting);
@@ -208,12 +206,11 @@ void InstallTask::doDownload()
         cred.authenticate(_dlconn->request());
     }
 
-    DebugL << "Initializing download"
-           << ": URI=" << asset.url() << ", File path=" << outfile << endl;
+    DebugL << "Initializing download: URL=" << asset.url() << ", File path=" << outfile << endl;
 
     _dlconn->setReadStream(
         new std::ofstream(outfile, std::ios_base::out | std::ios_base::binary));
-    _dlconn->IncomingProgress += slot(this, &InstallTask::onDownloadProgress);
+    // _dlconn->IncomingProgress += slot(this, &InstallTask::onDownloadProgress); // FIXME
     _dlconn->Complete += slot(this, &InstallTask::onDownloadComplete);
     _dlconn->send();
 
@@ -253,12 +250,10 @@ void InstallTask::doExtract()
     // Get the input file and check veracity
     std::string archivePath(_manager.getCacheFilePath(asset.fileName()));
     if (!fs::exists(archivePath))
-        throw std::runtime_error("The local package file does not exist: " +
-                                 archivePath);
+        throw std::runtime_error("The local package file does not exist: " + archivePath);
     if (!_manager.isSupportedFileType(asset.fileName()))
         throw std::runtime_error(
-            "The local package has an unsupported file extension: " +
-            fs::extname(archivePath));
+            "The local package has an unsupported file extension: " + fs::extname(archivePath));
 
     // Verify file checksum if one was provided
     std::string originalChecksum(asset.checksum());
@@ -268,8 +263,7 @@ void InstallTask::doExtract()
         DebugL << "Verify checksum: original=" << originalChecksum
                << ", computed=" << computedChecksum << endl;
         if (originalChecksum != computedChecksum)
-            throw std::runtime_error("Checksum verification failed: " +
-                                     fs::extname(archivePath));
+            throw std::runtime_error("Checksum verification failed: " + fs::extname(archivePath));
     }
 
     // Create the output directory
@@ -362,7 +356,6 @@ void InstallTask::doFinalize()
 void InstallTask::setComplete()
 {
     {
-
         assert(_progress == 100);
 
         InfoL << "Package installed: "
@@ -376,7 +369,6 @@ void InstallTask::setComplete()
 
     // Close the connection
     {
-
         if (_dlconn)
             _dlconn->close();
     }
@@ -394,7 +386,6 @@ void InstallTask::setComplete()
 void InstallTask::setProgress(int value)
 {
     {
-
         _progress = value;
     }
     Progress.emit(*this, value);
@@ -403,7 +394,6 @@ void InstallTask::setProgress(int value)
 
 Package::Asset InstallTask::getRemoteAsset() const
 {
-
     return !_options.version.empty()
                ? _remote->assetVersion(_options.version)
                : !_options.sdkVersion.empty()
@@ -414,14 +404,12 @@ Package::Asset InstallTask::getRemoteAsset() const
 
 int InstallTask::progress() const
 {
-
     return _progress;
 }
 
 
 bool InstallTask::valid() const
 {
-
     return !stateEquals(InstallationState::Failed) && _local->valid() &&
            (!_remote || _remote->valid());
 }
@@ -455,28 +443,24 @@ bool InstallTask::complete() const
 
 LocalPackage* InstallTask::local() const
 {
-
     return _local;
 }
 
 
 RemotePackage* InstallTask::remote() const
 {
-
     return _remote;
 }
 
 
 InstallOptions& InstallTask::options()
 {
-
     return _options;
 }
 
 
 uv::Loop* InstallTask::loop() const
 {
-
     return _loop;
 }
 

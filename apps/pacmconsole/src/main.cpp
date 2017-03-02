@@ -202,9 +202,7 @@ int main(int argc, char** argv)
         // Setup the file logger
         std::string logPath(getCwd());
         fs::addnode(logPath, "logs");
-        fs::addnode(logPath,
-                    util::format("Pacm_%Ld.log",
-                                 static_cast<long>(Timestamp().epochTime())));
+        fs::addnode(logPath, util::format("Pacm_%Ld.log", static_cast<long>(Timestamp().epochTime())));
         Logger::instance().add(new FileChannel("Pacm", logPath, LDebug));
 
         // Init SSL client context

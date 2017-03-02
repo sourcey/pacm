@@ -3,7 +3,7 @@
 // LibSourcey
 // Copyright (c) 2005, Sourcey <http://sourcey.com>
 //
-// SPDX-License-Identifier:	LGPL-2.1+
+// SPDX-License-Identifier: LGPL-2.1+
 //
 /// @addtogroup pacm
 /// @{
@@ -42,7 +42,7 @@ typedef RemotePackageStore::Map RemotePackageMap;
 
 /// The Package Manager provides an interface for managing,
 /// installing, updating and uninstalling Pacm packages.
-class PackageManager
+class SCY_EXTERN PackageManager
 {
 public:
     /// Package manager initialization options.

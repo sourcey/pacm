@@ -3,7 +3,7 @@
 // LibSourcey
 // Copyright (c) 2005, Sourcey <http://sourcey.com>
 //
-// SPDX-License-Identifier:	LGPL-2.1+
+// SPDX-License-Identifier: LGPL-2.1+
 //
 /// @addtogroup pacm
 /// @{
@@ -22,14 +22,14 @@ namespace pacm {
 
 /// This class is a JSON representation of an
 /// package belonging to the PackageManager.
-struct Package : public json::Value
+struct Package : public json::value
 {
     /// This class represents a archived file
     /// asset containing files belonging to
     /// the parent package.
     struct Asset
     {
-        Asset(json::Value& src);
+        Asset(json::value& src);
         virtual ~Asset();
 
         virtual std::string fileName() const;
@@ -46,11 +46,11 @@ struct Package : public json::Value
         virtual Asset& operator=(const Asset& r);
         virtual bool operator==(const Asset& r) const;
 
-        json::Value& root;
+        json::value& root;
     };
 
     Package();
-    Package(const json::Value& src);
+    Package(const json::value& src);
     virtual ~Package();
 
     virtual std::string id() const;
@@ -75,10 +75,10 @@ struct Package : public json::Value
 struct RemotePackage : public Package
 {
     RemotePackage();
-    RemotePackage(const json::Value& src);
+    RemotePackage(const json::value& src);
     virtual ~RemotePackage();
 
-    virtual json::Value& assets();
+    virtual json::value& assets();
 
     /// Returns the latest asset for this package.
     /// For local packages this is the currently installed version.
@@ -113,7 +113,7 @@ struct LocalPackage : public Package
     /// files and their location on the file system.
     struct Manifest
     {
-        Manifest(json::Value& src);
+        Manifest(json::value& src);
         virtual ~Manifest();
 
         virtual bool empty() const;
@@ -121,14 +121,14 @@ struct LocalPackage : public Package
         // virtual void addDir(const std::string& path);
         virtual void addFile(const std::string& path);
 
-        json::Value& root;
+        json::value& root;
 
     private:
         // Manifest& operator = (const Manifest&) {}
     };
 
     LocalPackage();
-    LocalPackage(const json::Value& src);
+    LocalPackage(const json::value& src);
 
     /// Create the local package from the remote package
     /// reference with the following manipulations.
@@ -209,7 +209,7 @@ struct LocalPackage : public Package
     virtual std::string getInstalledFilePath(const std::string& fileName,
                                              bool whiny = false);
 
-    virtual json::Value& errors();
+    virtual json::value& errors();
     virtual void addError(const std::string& message);
     virtual std::string lastError() const;
     virtual void clearErrors();
