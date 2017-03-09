@@ -13,14 +13,14 @@
 #define SCY_Pacm_PackageManager_H
 
 
-#include "scy/collection.h"
-#include "scy/filesystem.h"
-#include "scy/json/json.h"
 #include "scy/pacm/config.h"
 #include "scy/pacm/installmonitor.h"
 #include "scy/pacm/installtask.h"
 #include "scy/pacm/package.h"
 #include "scy/pacm/types.h"
+#include "scy/collection.h"
+#include "scy/filesystem.h"
+#include "scy/json/json.h"
 #include "scy/platform.h"
 #include "scy/stateful.h"
 #include "scy/task.h"
@@ -49,24 +49,20 @@ public:
     struct Options
     {
         std::string endpoint; ///< The HTTP server endpoint
-        std::string
-            indexURI; ///< The HTTP server URI for querying packages JSON
+        std::string indexURI; ///< The HTTP server URI for querying packages JSON
         std::string httpUsername; ///< Username for HTTP basic auth
         std::string httpPassword; ///< PAssword for HTTP basic auth
-        std::string
-            httpOAuthToken; ///< Will be used instead of HTTP basic if provided
+        std::string httpOAuthToken; ///< Will be used instead of HTTP basic if provided
 
-        std::string tempDir; ///< Directory where package files will be
-                             ///downloaded and extracted
+        std::string tempDir; ///< Directory where package files will be downloaded and extracted
         std::string dataDir; ///< Directory where package manifests will be kept
         std::string installDir; ///< Directory where packages will be installed
 
         std::string platform;          ///< Platform (win32, linux, mac)
         std::string checksumAlgorithm; ///< Checksum algorithm (MDS/SHA1)
 
-        bool clearFailedCache; ///< This flag tells the package manager weather
-                               ///or not
-        ///< to clear the package cache if installation fails.
+        bool clearFailedCache; ///< This flag tells the package manager weather or not
+                               ///< to clear the package cache if installation fails.
 
         Options(const std::string& root = getCwd())
         {
@@ -127,8 +123,7 @@ public:
     /// Any other error will throw a std::runtime_error.
     virtual InstallTask::Ptr
     installPackage(const std::string& name,
-                   const InstallOptions& options =
-                       InstallOptions()); //, bool whiny = false
+                   const InstallOptions& options = InstallOptions());
 
     /// Installs multiple packages.
     /// The same options will be passed to each task.
@@ -145,8 +140,7 @@ public:
     /// The returned InstallTask must be started.
     virtual InstallTask::Ptr
     updatePackage(const std::string& name,
-                  const InstallOptions& options =
-                      InstallOptions()); //, bool whiny = false
+                  const InstallOptions& options = InstallOptions());
 
     /// Updates multiple packages.
     /// Throws an exception if the package does not exist.
@@ -217,9 +211,8 @@ public:
     virtual PackagePair getOrCreatePackagePair(const std::string& id);
 
     /// Creates a package installation task for the given pair.
-    virtual InstallTask::Ptr
-    createInstallTask(PackagePair& pair,
-                      const InstallOptions& options = InstallOptions());
+    virtual InstallTask::Ptr createInstallTask(PackagePair& pair, 
+        const InstallOptions& options = InstallOptions());
 
     /// Returns the version number of an installed package.
     /// Exceptions will be thrown if the package does not exist,
@@ -289,6 +282,7 @@ public:
     Signal<void(const InstallTask&)> InstallTaskComplete;
 
 protected:
+
     //
     /// Callbacks
 

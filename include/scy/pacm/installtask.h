@@ -13,10 +13,11 @@
 #define SCY_Pacm_InstallTask_H
 
 
+#include "scy/pacm/config.h"
+#include "scy/pacm/package.h"
 #include "scy/http/client.h"
 #include "scy/idler.h"
 #include "scy/logger.h"
-#include "scy/pacm/package.h"
 #include "scy/stateful.h"
 
 
