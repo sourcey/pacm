@@ -23,7 +23,7 @@ namespace pacm {
 typedef std::vector<LocalPackage*> LocalPackageVec;
 
 
-class SCY_EXTERN InstallMonitor
+class Pacm_API InstallMonitor
 {
 public:
     InstallMonitor();

@@ -42,7 +42,7 @@ typedef RemotePackageStore::Map RemotePackageMap;
 
 /// The Package Manager provides an interface for managing,
 /// installing, updating and uninstalling Pacm packages.
-class SCY_EXTERN PackageManager
+class Pacm_API PackageManager
 {
 public:
     /// Package manager initialization options.

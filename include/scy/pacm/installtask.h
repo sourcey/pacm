@@ -24,7 +24,7 @@ namespace scy {
 namespace pacm {
 
 
-class SCY_EXTERN PackageManager;
+class Pacm_API PackageManager;
 
 
 struct InstallationState : public State
@@ -83,7 +83,7 @@ struct InstallOptions
 
 
 /// This class implements the package installation procedure.
-class SCY_EXTERN InstallTask : public basic::Runnable, public Stateful<InstallationState>
+class Pacm_API InstallTask : public basic::Runnable, public Stateful<InstallationState>
 {
 public:
     typedef std::shared_ptr<InstallTask> Ptr;

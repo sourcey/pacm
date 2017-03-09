@@ -33,6 +33,17 @@ namespace pacm {
 #else
 #error "Unknown platform"
 #endif
+    
+// Shared library exports
+#if defined(SCY_WIN) && defined(SCY_SHARED_LIBRARY)
+    #if defined(Pacm_EXPORTS)
+        #define Pacm_API __declspec(dllexport)
+    #else
+        #define Pacm_API __declspec(dllimport)
+    #endif
+#else
+    #define Pacm_API // nothing
+#endif
 
 
 } // namespace pacm
