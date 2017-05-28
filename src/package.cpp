@@ -3,7 +3,7 @@
 // LibSourcey
 // Copyright (c) 2005, Sourcey <https://sourcey.com>
 //
-// SPDX-License-Identifier:	LGPL-2.1+
+// SPDX-License-Identifier: LGPL-2.1+
 //
 /// @addtogroup pacm
 /// @{
@@ -31,8 +31,8 @@ Package::Package()
 }
 
 
-Package::Package(const json::Value& src)
-    : json::Value(src)
+Package::Package(const json::value& src)
+    : json::value(src)
 {
 }
 
@@ -50,38 +50,37 @@ bool Package::valid() const
 
 std::string Package::id() const
 {
-    return (*this)["id"].asString();
+    return (*this)["id"].get<std::string>();
 }
 
 
 std::string Package::type() const
 {
-    return (*this)["type"].asString();
+    return (*this)["type"].get<std::string>();
 }
 
 
 std::string Package::name() const
 {
-    return (*this)["name"].asString();
+    return (*this)["name"].get<std::string>();
 }
 
 
 std::string Package::author() const
 {
-    return (*this)["author"].asString();
+    return (*this)["author"].get<std::string>();
 }
 
 
 std::string Package::description() const
 {
-    return (*this)["description"].asString();
+    return (*this)["description"].get<std::string>();
 }
 
 
 void Package::print(std::ostream& ost) const
 {
-    json::StyledWriter writer;
-    ost << writer.write(*this);
+    ost << dump();
 }
 
 
@@ -90,7 +89,7 @@ void Package::print(std::ostream& ost) const
 //
 
 
-Package::Asset::Asset(json::Value& src)
+Package::Asset::Asset(json::value& src)
     : root(src)
 {
 }
@@ -103,51 +102,51 @@ Package::Asset::~Asset()
 
 std::string Package::Asset::fileName() const
 {
-    return root["file-name"].asString();
+    return root["file-name"].get<std::string>();
 }
 
 
 std::string Package::Asset::version() const
 {
-    return root.get("version", "0.0.0").asString();
+    return root.value("version", "0.0.0");
 }
 
 
 std::string Package::Asset::sdkVersion() const
 {
-    return root.get("sdk-version", "0.0.0").asString();
+    return root.value("sdk-version", "0.0.0");
 }
 
 
 std::string Package::Asset::checksum() const
 {
-    return root.get("checksum", "").asString();
+    return root.value("checksum", "");
 }
 
 
 std::string Package::Asset::url(int index) const
 {
-    return root["mirrors"][index]["url"].asString();
+    return root["mirrors"][index]["url"].get<std::string>();
 }
 
 
 int Package::Asset::fileSize() const
 {
-    return root.get("file-size", 0).asInt();
+    return root.value("file-size", 0);
 }
 
 
 bool Package::Asset::valid() const
 {
-    return root.isMember("file-name") && root.isMember("version") &&
-           root.isMember("mirrors");
+    return root.find("file-name") != root.end()
+        && root.find("version") != root.end()
+        && root.find("mirrors") != root.end();
 }
 
 
 void Package::Asset::print(std::ostream& ost) const
 {
-    json::StyledWriter writer;
-    ost << writer.write(root);
+    ost << root.dump();
 }
 
 
@@ -160,8 +159,9 @@ Package::Asset& Package::Asset::operator=(const Asset& r)
 
 bool Package::Asset::operator==(const Asset& r) const
 {
-    return fileName() == r.fileName() && version() == r.version() &&
-           checksum() == r.checksum();
+    return fileName() == r.fileName() 
+        && version() == r.version() 
+        && checksum() == r.checksum();
 }
 
 
@@ -175,7 +175,7 @@ RemotePackage::RemotePackage()
 }
 
 
-RemotePackage::RemotePackage(const json::Value& src)
+RemotePackage::RemotePackage(const json::value& src)
     : Package(src)
 {
 }
@@ -186,7 +186,7 @@ RemotePackage::~RemotePackage()
 }
 
 
-json::Value& RemotePackage::assets()
+json::value& RemotePackage::assets()
 {
     return (*this)["assets"];
 }
@@ -194,7 +194,7 @@ json::Value& RemotePackage::assets()
 
 Package::Asset RemotePackage::latestAsset()
 {
-    json::Value& assets = this->assets();
+    json::value& assets = this->assets();
     if (assets.empty())
         throw std::runtime_error("Package has no assets");
 
@@ -203,8 +203,8 @@ Package::Asset RemotePackage::latestAsset()
     int index = 0;
     if (assets.size() > 1) {
         for (int i = 1; i < static_cast<int>(assets.size()); i++) {
-            if (util::compareVersion(assets[i]["version"].asString(),
-                                     assets[index]["version"].asString())) {
+            if (util::compareVersion(assets[i]["version"].get<std::string>(),
+                                     assets[index]["version"].get<std::string>())) {
                 index = i;
             }
         }
@@ -216,13 +216,13 @@ Package::Asset RemotePackage::latestAsset()
 
 Package::Asset RemotePackage::assetVersion(const std::string& version)
 {
-    json::Value& assets = this->assets();
+    json::value& assets = this->assets();
     if (assets.empty())
         throw std::runtime_error("Package has no assets");
 
     int index = -1;
     for (int i = 1; i < static_cast<int>(assets.size()); i++) {
-        if (assets[i]["version"].asString() == version) {
+        if (assets[i]["version"].get<std::string>() == version) {
             index = i;
             break;
         }
@@ -237,17 +237,17 @@ Package::Asset RemotePackage::assetVersion(const std::string& version)
 
 Package::Asset RemotePackage::latestSDKAsset(const std::string& version)
 {
-    json::Value& assets = this->assets();
+    json::value& assets = this->assets();
     if (assets.empty())
         throw std::runtime_error("Package has no assets");
 
     int index = -1;
     for (int i = 1; i < static_cast<int>(assets.size()); i++) {
-        if (assets[i]["sdk-version"].asString() == version &&
+        if (assets[i]["sdk-version"].get<std::string>() == version &&
             (index == -1 ||
-             (assets[index]["sdk-version"].asString() != version ||
-              util::compareVersion(assets[i]["version"].asString(),
-                                   assets[index]["version"].asString())))) {
+             (assets[index]["sdk-version"].get<std::string>() != version ||
+              util::compareVersion(assets[i]["version"].get<std::string>(),
+                                   assets[index]["version"].get<std::string>())))) {
             index = i;
         }
     }
@@ -270,7 +270,7 @@ LocalPackage::LocalPackage()
 }
 
 
-LocalPackage::LocalPackage(const json::Value& src)
+LocalPackage::LocalPackage(const json::value& src)
     : Package(src)
 {
 }
@@ -282,7 +282,7 @@ LocalPackage::LocalPackage(const RemotePackage& src)
     assert(src.valid());
 
     // Clear unwanted remote package fields
-    removeMember("assets");
+    erase("assets");
     assert(valid());
 }
 
@@ -343,24 +343,23 @@ bool LocalPackage::isFailed() const
 
 std::string LocalPackage::state() const
 {
-    return get("state", "Installing").asString();
+    return value("state", "Installing");
 }
 
 
 std::string LocalPackage::installState() const
 {
-    return get("install-state", "None").asString();
+    return value("install-state", "None");
 }
 
 
 std::string LocalPackage::installDir() const
 {
-    return get("install-dir", "").asString();
+    return value("install-dir", "");
 }
 
 
-std::string LocalPackage::getInstalledFilePath(const std::string& fileName,
-                                               bool whiny)
+std::string LocalPackage::getInstalledFilePath(const std::string& fileName, bool whiny)
 {
     std::string dir = installDir();
     if (whiny && dir.empty())
@@ -375,7 +374,7 @@ std::string LocalPackage::getInstalledFilePath(const std::string& fileName,
 void LocalPackage::setVersionLock(const std::string& version)
 {
     if (version.empty())
-        (*this).removeMember("version-lock");
+        (*this).erase("version-lock");
     else
         (*this)["version-lock"] = version;
 }
@@ -384,7 +383,7 @@ void LocalPackage::setVersionLock(const std::string& version)
 void LocalPackage::setSDKVersionLock(const std::string& version)
 {
     if (version.empty())
-        (*this).removeMember("sdk-version-lock");
+        (*this).erase("sdk-version-lock");
     else
         (*this)["sdk-version-lock"] = version;
 }
@@ -392,19 +391,19 @@ void LocalPackage::setSDKVersionLock(const std::string& version)
 
 std::string LocalPackage::version() const
 {
-    return get("version", "0.0.0").asString();
+    return value("version", "0.0.0");
 }
 
 
 std::string LocalPackage::versionLock() const
 {
-    return get("version-lock", "").asString();
+    return value("version-lock", "");
 }
 
 
 std::string LocalPackage::sdkLockedVersion() const
 {
-    return get("sdk-version-lock", "").asString();
+    return value("sdk-version-lock", "");
 }
 
 
@@ -415,7 +414,7 @@ bool LocalPackage::verifyInstallManifest(bool allowEmpty)
     // Check file system for each manifest file
     LocalPackage::Manifest manifest = this->manifest();
     for (auto it = manifest.root.begin(); it != manifest.root.end(); it++) {
-        std::string path = this->getInstalledFilePath((*it).asString(), false);
+        std::string path = this->getInstalledFilePath((*it).get<std::string>(), false);
         DebugS(this) << name() << ": Checking exists: " << path << std::endl;
 
         if (!fs::exists(fs::normalize(path))) {
@@ -448,7 +447,7 @@ void LocalPackage::setInstallDir(const std::string& dir)
 }
 
 
-json::Value& LocalPackage::errors()
+json::value& LocalPackage::errors()
 {
     return (*this)["errors"];
 }
@@ -456,14 +455,14 @@ json::Value& LocalPackage::errors()
 
 void LocalPackage::addError(const std::string& message)
 {
-    errors().append(message);
+    errors().push_back(message);
 }
 
 
 std::string LocalPackage::lastError() const
 {
-    json::Value errors = get("errors", Json::arrayValue);
-    return errors.empty() ? "" : errors[errors.size() - 1].asString();
+    json::value errors = (*this)["errors"];
+    return errors.empty() ? "" : errors[errors.size() - 1].get<std::string>();
 }
 
 
@@ -484,7 +483,7 @@ bool LocalPackage::valid() const
 //
 
 
-LocalPackage::Manifest::Manifest(json::Value& src)
+LocalPackage::Manifest::Manifest(json::value& src)
     : root(src)
 {
 }
@@ -501,8 +500,8 @@ void LocalPackage::Manifest::addFile(const std::string& path)
     // if (!find_child_by_(*this)["file", "path", path.c_str()).empty())
     //    return;
 
-    // json::Value node(path);
-    root.append(path);
+    // json::value node(path);
+    root.push_back(path);
 }
 
 

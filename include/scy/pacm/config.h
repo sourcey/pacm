@@ -3,7 +3,7 @@
 // LibSourcey
 // Copyright (c) 2005, Sourcey <https://sourcey.com>
 //
-// SPDX-License-Identifier:	LGPL-2.1+
+// SPDX-License-Identifier: LGPL-2.1+
 //
 /// @addtogroup pacm
 /// @{
@@ -32,6 +32,17 @@ namespace pacm {
 #define DEFAULT_PLATFORM "linux"
 #else
 #error "Unknown platform"
+#endif
+    
+// Shared library exports
+#if defined(SCY_WIN) && defined(SCY_SHARED_LIBRARY)
+    #if defined(Pacm_EXPORTS)
+        #define Pacm_API __declspec(dllexport)
+    #else
+        #define Pacm_API __declspec(dllimport)
+    #endif
+#else
+    #define Pacm_API // nothing
 #endif
 
 
