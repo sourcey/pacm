@@ -3,11 +3,11 @@
 > Simple C++ package manager
 
 [![Circle CI](https://circleci.com/gh/sourcey/libsourcey.svg?style=shield&circle-token=ab142562b19bb857de796d729aab28fa9df7682d)](https://circleci.com/gh/sourcey/libsourcey)
-[![Doxygen](http://sourcey.com/images/doxygen.svg)](http://sourcey.com/libsourcey/api-pacm/)
+[![Doxygen](https://sourcey.com/images/doxygen.svg)](https://sourcey.com/libsourcey/api-pacm/)
 
-**Homepage**: [http://sourcey.com/pacm](http://sourcey.com/pacm)  
-**Documentation**: [http://sourcey.com/libsourcey/api-pacm/](http://sourcey.com/libsourcey/api-pacm/)  
-**Dependencies**: [LibSourcey (base, uv, net, json, crypto, archo, http)](http://sourcey.com/libsourcey)  
+**Homepage**: [https://sourcey.com/pacm](https://sourcey.com/pacm)  
+**Documentation**: [https://sourcey.com/libsourcey/api-pacm/](https://sourcey.com/libsourcey/api-pacm/)  
+**Dependencies**: [LibSourcey (base, uv, net, json, crypto, archo, http)](https://sourcey.com/libsourcey)  
 **Licence**: LGPL
 
 Pacm is your solution for a simple C++ package manager that can be embedded and redistributed with native applications. Pacm is designed to make short work of the following tasks:

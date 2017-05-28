@@ -1,7 +1,7 @@
 ///
 //
 // LibSourcey
-// Copyright (c) 2005, Sourcey <http://sourcey.com>
+// Copyright (c) 2005, Sourcey <https://sourcey.com>
 //
 // SPDX-License-Identifier:	LGPL-2.1+
 //
@@ -40,14 +40,14 @@ InstallTask::InstallTask(PackageManager& manager, LocalPackage* local,
     , _dlconn(nullptr)
     , _loop(loop)
 {
-    TraceS(this) << "Create" << endl;
+    TraceA("Create")
     assert(valid());
 }
 
 
 InstallTask::~InstallTask()
 {
-    TraceS(this) << "Destory" << endl;
+    TraceA("Destory")
 
     // :)
 }

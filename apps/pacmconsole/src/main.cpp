@@ -54,7 +54,7 @@ public:
         cout
             << "\nPacm v0.2.0"
                "\n(c) Sourcey"
-               "\nhttp://sourcey.com/pacm"
+               "\nhttps://sourcey.com/pacm"
                "\n"
                "\nGeneral commands:"
                "\n  -help           Print help"
