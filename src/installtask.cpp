@@ -39,14 +39,14 @@ InstallTask::InstallTask(PackageManager& manager, LocalPackage* local, RemotePac
     , _dlconn(nullptr)
     , _loop(loop)
 {
-    TraceA("Create")
+    LTrace("Create")
     assert(valid());
 }
 
 
 InstallTask::~InstallTask()
 {
-    TraceA("Destory")
+    LTrace("Destory")
 
     // :)
 }
@@ -54,7 +54,7 @@ InstallTask::~InstallTask()
 
 void InstallTask::start()
 {
-    TraceS(this) << "Starting: Name=" << _local->name()
+    STrace << "Starting: Name=" << _local->name()
                  << ", Version= " << _options.version
                  << ", SDK Version=" << _options.sdkVersion << endl;
 
@@ -160,7 +160,7 @@ void InstallTask::run()
                 assert(0);
         }
     } catch (std::exception& exc) {
-        ErrorL << "Installation failed: " << exc.what() << endl;
+        SError << "Installation failed: " << exc.what() << endl;
         _error.message = exc.what();
         setState(this, InstallationState::Failed);
     }
@@ -169,7 +169,7 @@ void InstallTask::run()
 
 void InstallTask::onStateChange(InstallationState& state, const InstallationState& oldState)
 {
-    DebugL << "State changed: " << oldState << " => " << state << endl;
+    SDebug << "State changed: " << oldState << " => " << state << endl;
 
     // Set the package install task so we know from which state to
     // resume installation.
@@ -192,7 +192,7 @@ void InstallTask::doDownload()
     /* 
     // force file re-download until os get file size is fixed and we can match crc
     if (_manager.hasCachedFile(asset)) {
-        DebugL << "file exists, skipping download" << endl;
+        SDebug << "file exists, skipping download" << endl;
         setState(this, InstallationState::Extracting);
         return;
     }
@@ -206,7 +206,7 @@ void InstallTask::doDownload()
         cred.authenticate(_dlconn->request());
     }
 
-    DebugL << "Initializing download: URL=" << asset.url() << ", File path=" << outfile << endl;
+    SDebug << "Initializing download: URL=" << asset.url() << ", File path=" << outfile << endl;
 
     _dlconn->setReadStream(
         new std::ofstream(outfile, std::ios_base::out | std::ios_base::binary));
@@ -220,7 +220,7 @@ void InstallTask::doDownload()
 
 void InstallTask::onDownloadProgress(const double& progress)
 {
-    DebugL << "Download progress: " << progress << endl;
+    SDebug << "Download progress: " << progress << endl;
 
     // Progress 1 - 75 covers download
     // Increments of 10 or greater
@@ -232,7 +232,7 @@ void InstallTask::onDownloadProgress(const double& progress)
 
 void InstallTask::onDownloadComplete(const http::Response& response)
 {
-    DebugL << "Download complete: " << response << endl;
+    SDebug << "Download complete: " << response << endl;
     _dlconn->close();
     _dlconn = nullptr;
     _downloading = false;
@@ -260,7 +260,7 @@ void InstallTask::doExtract()
     if (!originalChecksum.empty()) {
         std::string computedChecksum(crypto::checksum(
             _manager.options().checksumAlgorithm, archivePath));
-        DebugL << "Verify checksum: original=" << originalChecksum
+        SDebug << "Verify checksum: original=" << originalChecksum
                << ", computed=" << computedChecksum << endl;
         if (originalChecksum != computedChecksum)
             throw std::runtime_error("Checksum verification failed: " + fs::extname(archivePath));
@@ -269,7 +269,7 @@ void InstallTask::doExtract()
     // Create the output directory
     std::string tempDir(_manager.getPackageDataDir(_local->id()));
 
-    DebugL << "Unpacking archive: " << archivePath << " to " << tempDir << endl;
+    SDebug << "Unpacking archive: " << archivePath << " to " << tempDir << endl;
 
     // Reset the local installation manifest before extraction
     _local->manifest().root.clear();
@@ -299,7 +299,7 @@ void InstallTask::doFinalize()
 
     // Ensure the install directory exists
     fs::mkdirr(installDir);
-    DebugL << "Finalizing to: " << installDir << endl;
+    SDebug << "Finalizing to: " << installDir << endl;
 
     // Move all extracted files to the installation path
     StringVec nodes;
@@ -312,7 +312,7 @@ void InstallTask::doFinalize()
             std::string target(installDir);
             fs::addnode(target, nodes[i]);
 
-            DebugL << "moving file: " << source << " => " << target << endl;
+            SDebug << "moving file: " << source << " => " << target << endl;
             fs::rename(source, target);
         } catch (std::exception& exc) {
             // The previous version files may be currently in use,
@@ -320,7 +320,7 @@ void InstallTask::doFinalize()
             // must be called from an external process before the
             // installation can be completed.
             errors = true;
-            ErrorL << "finalize error: " << exc.what() << endl;
+            SError << "finalize error: " << exc.what() << endl;
             _local->addError(exc.what());
         }
     }
@@ -329,7 +329,7 @@ void InstallTask::doFinalize()
     // The current task will be cancelled, and the package
     // saved with the Installing state.
     if (errors) {
-        DebugL << "Finalization failed, cancelling task" << endl;
+        SDebug << "Finalization failed, cancelling task" << endl;
         cancel();
         return;
     }
@@ -337,7 +337,7 @@ void InstallTask::doFinalize()
     // Remove the temporary output folder if the installation
     // was successfully finalized.
     try {
-        DebugL << "Removing temp directory: " << tempDir << endl;
+        SDebug << "Removing temp directory: " << tempDir << endl;
 
         // FIXME: How to remove a folder properly?
         fs::unlink(tempDir);
@@ -346,10 +346,10 @@ void InstallTask::doFinalize()
         // While testing on a windows system this fails regularly
         // with a file sharing error, but since the package is already
         // installed we can just swallow it.
-        WarnL << "cannot remove temp directory: " << exc.what() << endl;
+        SWarn << "cannot remove temp directory: " << exc.what() << endl;
     }
 
-    DebugL << "finalization complete" << endl;
+    SDebug << "finalization complete" << endl;
 }
 
 
@@ -358,7 +358,7 @@ void InstallTask::setComplete()
     {
         assert(_progress == 100);
 
-        InfoL << "Package installed: "
+        SInfo << "Package installed: "
               << "Name=" << _local->name() << ", Version=" << _local->version()
               << ", Package State=" << _local->state()
               << ", Package Install State=" << _local->installState() << endl;

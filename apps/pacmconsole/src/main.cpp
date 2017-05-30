@@ -87,7 +87,7 @@ public:
         for (auto& kv : optparse.args) {
             const std::string& key = kv.first;
             const std::string& value = kv.second;
-            DebugL << "Setting option: " << key << ": " << value << std::endl;
+            SDebug << "Setting option: " << key << ": " << value << std::endl;
 
             if (key == "help") {
                 options.help = true;
@@ -203,7 +203,7 @@ int main(int argc, char** argv)
         std::string logPath(getCwd());
         fs::addnode(logPath, "logs");
         fs::addnode(logPath, util::format("Pacm_%Ld.log", static_cast<long>(Timestamp().epochTime())));
-        Logger::instance().add(new FileChannel("Pacm", logPath, LDebug));
+        Logger::instance().add(new FileChannel("Pacm", logPath, Level::Debug));
 
         // Init SSL client context
         net::SSLManager::initNoVerifyClient();
