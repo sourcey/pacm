@@ -8,6 +8,21 @@
 **Dependencies**: [LibSourcey (base, net, json, http, archo, crypto)](https://github.com/sourcey/libsourcey)
 **Licence**: LGPL-2.1+
 
+## Installing
+
+Pacm is part of the [LibSourcey](https://github.com/sourcey/libsourcey) project. To build:
+
+~~~ bash
+git clone --recurse-submodules https://github.com/sourcey/libsourcey.git
+cd libsourcey
+cmake -B build -DBUILD_MODULE_pacm=ON -DBUILD_TESTS=ON
+cmake --build build
+~~~
+
+Pacm can also be used as an external module by cloning it into the LibSourcey `src` folder, where it will be auto-discovered by the build system.
+
+## Overview
+
 Pacm is your solution for a simple C++ package manager that can be embedded and redistributed with native applications. Pacm is designed to make short work of the following tasks:
 
 * Auto-Updates
@@ -72,7 +87,7 @@ pm.updateAllPackages();
 pm.uninstallPackage("SomePackageName");
 ~~~
 
-If you're planning on using the native API then the best place to start is the source code of the [Pacm command line tool](apps/pacmconsole/src/main.cpp), which can be easily reverse engineered and modified for your own purposes.
+If you're planning on using the native API then the best place to start is the source code of the [pacm-cli command line tool](apps/pacm-cli/src/main.cpp), which can be easily reverse engineered and modified for your own purposes.
 
 For all method definitions and further documentation the [source code](include/scy/pacm/packagemanager.h) is always the best reference.
 
@@ -85,19 +100,19 @@ Pacm comes with a redistributable command-line tool which can be compiled and re
 Print help:
 
 ~~~ bash
-pacmconsole -help
+pacm-cli -help
 ~~~
 
 Install a package:
 
 ~~~ bash
-pacmconsole -endpoint https://packages.example.com -uri /packages.json -print -install myplugin
+pacm-cli -endpoint https://packages.example.com -uri /packages.json -print -install myplugin
 ~~~
 
 Update all installed packages to the latest version:
 
 ~~~ bash
-pacmconsole -endpoint https://packages.example.com -uri /packages.json -print -update
+pacm-cli -endpoint https://packages.example.com -uri /packages.json -print -update
 ~~~
 
 ### Supported Commands
