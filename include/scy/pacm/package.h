@@ -9,8 +9,7 @@
 /// @{
 
 
-#ifndef SCY_Pacm_Package_H
-#define SCY_Pacm_Package_H
+#pragma once
 
 
 #include "scy/json/json.h"
@@ -30,7 +29,7 @@ struct Package : public json::value
     struct Asset
     {
         Asset(json::value& src);
-        virtual ~Asset();
+        virtual ~Asset() noexcept;
 
         virtual std::string fileName() const;
         virtual std::string version() const;
@@ -51,7 +50,7 @@ struct Package : public json::value
 
     Package();
     Package(const json::value& src);
-    virtual ~Package();
+    virtual ~Package() noexcept;
 
     virtual std::string id() const;
     virtual std::string name() const;
@@ -76,7 +75,7 @@ struct RemotePackage : public Package
 {
     RemotePackage();
     RemotePackage(const json::value& src);
-    virtual ~RemotePackage();
+    virtual ~RemotePackage() noexcept;
 
     virtual json::value& assets();
 
@@ -114,7 +113,7 @@ struct LocalPackage : public Package
     struct Manifest
     {
         Manifest(json::value& src);
-        virtual ~Manifest();
+        virtual ~Manifest() noexcept;
 
         virtual bool empty() const;
 
@@ -137,7 +136,7 @@ struct LocalPackage : public Package
     LocalPackage(const RemotePackage& src);
 
 
-    virtual ~LocalPackage();
+    virtual ~LocalPackage() noexcept;
 
     /// Set's the overall package state. Possible values are:
     /// Installing, Installed, Failed, Uninstalled.
@@ -244,14 +243,11 @@ struct PackagePair
 };
 
 
-typedef std::vector<PackagePair> PackagePairVec;
+using PackagePairVec = std::vector<PackagePair>;
 
 
 } // namespace pacm
 } // namespace scy
-
-
-#endif // SCY_Pacm_Package_H
 
 
 /// @\}

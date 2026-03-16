@@ -12,7 +12,6 @@
 #include "scy/pacm/installtask.h"
 #include "scy/archo/zipfile.h"
 #include "scy/crypto/hash.h"
-#include "scy/filesystem.h"
 #include "scy/http/authenticator.h"
 #include "scy/http/client.h"
 #include "scy/logger.h"
@@ -20,6 +19,8 @@
 #include "scy/pacm/package.h"
 #include "scy/pacm/packagemanager.h"
 
+#include <algorithm>
+#include <filesystem>
 
 using namespace std;
 
@@ -39,14 +40,15 @@ InstallTask::InstallTask(PackageManager& manager, LocalPackage* local, RemotePac
     , _dlconn(nullptr)
     , _loop(loop)
 {
-    LTrace("Create")
-    assert(valid());
+    LTrace("Create");
+    if (!valid())
+        throw std::runtime_error("Invalid install task configuration");
 }
 
 
 InstallTask::~InstallTask()
 {
-    LTrace("Destory")
+    LTrace("Destory");
 
     // :)
 }
@@ -55,8 +57,8 @@ InstallTask::~InstallTask()
 void InstallTask::start()
 {
     STrace << "Starting: Name=" << _local->name()
-                 << ", Version= " << _options.version
-                 << ", SDK Version=" << _options.sdkVersion << endl;
+           << ", Version= " << _options.version
+           << ", SDK Version=" << _options.sdkVersion << endl;
 
     // Prepare environment and install options
 
@@ -84,11 +86,11 @@ void InstallTask::start()
     }
 
     // Normalize lazy windows paths
-    _options.installDir = fs::normalize(_options.installDir);
+    _options.installDir = std::filesystem::path(_options.installDir).lexically_normal().string();
     _local->setInstallDir(_options.installDir);
 
     // Create the directory
-    fs::mkdirr(_options.installDir);
+    std::filesystem::create_directories(_options.installDir);
 
     // If the package failed previously we might need
     // to clear the file cache.
@@ -157,7 +159,7 @@ void InstallTask::run()
                 setComplete();
                 return;
             default:
-                assert(0);
+                throw std::runtime_error("Unexpected installation state");
         }
     } catch (std::exception& exc) {
         SError << "Installation failed: " << exc.what() << endl;
@@ -189,14 +191,6 @@ void InstallTask::doDownload()
 
     // If the remote asset already exists in the cache, we can
     // skip the download.
-    /* 
-    // force file re-download until os get file size is fixed and we can match crc
-    if (_manager.hasCachedFile(asset)) {
-        SDebug << "file exists, skipping download" << endl;
-        setState(this, InstallationState::Extracting);
-        return;
-    }
-    */
 
     std::string outfile = _manager.getCacheFilePath(asset.fileName());
     _dlconn = http::Client::instance().createConnection(asset.url(), _loop);
@@ -210,7 +204,7 @@ void InstallTask::doDownload()
 
     _dlconn->setReadStream(
         new std::ofstream(outfile, std::ios_base::out | std::ios_base::binary));
-    // _dlconn->IncomingProgress += slot(this, &InstallTask::onDownloadProgress); // FIXME
+    _dlconn->IncomingProgress += slot(this, &InstallTask::onDownloadProgress);
     _dlconn->Complete += slot(this, &InstallTask::onDownloadComplete);
     _dlconn->send();
 
@@ -249,11 +243,11 @@ void InstallTask::doExtract()
 
     // Get the input file and check veracity
     std::string archivePath(_manager.getCacheFilePath(asset.fileName()));
-    if (!fs::exists(archivePath))
+    if (!std::filesystem::exists(archivePath))
         throw std::runtime_error("The local package file does not exist: " + archivePath);
     if (!_manager.isSupportedFileType(asset.fileName()))
         throw std::runtime_error(
-            "The local package has an unsupported file extension: " + fs::extname(archivePath));
+            "The local package has an unsupported file extension: " + std::filesystem::path(archivePath).extension().string());
 
     // Verify file checksum if one was provided
     std::string originalChecksum(asset.checksum());
@@ -263,7 +257,7 @@ void InstallTask::doExtract()
         SDebug << "Verify checksum: original=" << originalChecksum
                << ", computed=" << computedChecksum << endl;
         if (originalChecksum != computedChecksum)
-            throw std::runtime_error("Checksum verification failed: " + fs::extname(archivePath));
+            throw std::runtime_error("Checksum verification failed: " + std::filesystem::path(archivePath).extension().string());
     }
 
     // Create the output directory
@@ -277,11 +271,16 @@ void InstallTask::doExtract()
     // Decompress the archive
     archo::ZipFile zip(archivePath);
     while (true) {
+        // Validate zip entry name to prevent path traversal attacks
+        std::string entryName = zip.currentFileName();
+        if (entryName.find("..") != std::string::npos)
+            throw std::runtime_error("Path traversal detected in archive entry: " + entryName);
+
         zip.extractCurrentFile(tempDir, true);
 
         // Add the extracted file to the package install manifest
         // Note: Manifest stores relative paths
-        _local->manifest().addFile(zip.currentFileName());
+        _local->manifest().addFile(entryName);
 
         if (!zip.goToNextFile())
             break;
@@ -298,22 +297,17 @@ void InstallTask::doFinalize()
     std::string installDir = options().installDir;
 
     // Ensure the install directory exists
-    fs::mkdirr(installDir);
+    std::filesystem::create_directories(installDir);
     SDebug << "Finalizing to: " << installDir << endl;
 
     // Move all extracted files to the installation path
-    StringVec nodes;
-    fs::readdir(tempDir, nodes);
-    for (unsigned i = 0; i < nodes.size(); i++) {
+    for (const auto& entry : std::filesystem::directory_iterator(tempDir)) {
         try {
-            std::string source(tempDir);
-            fs::addnode(source, nodes[i]);
-
-            std::string target(installDir);
-            fs::addnode(target, nodes[i]);
+            std::string source = entry.path().string();
+            std::string target = (std::filesystem::path(installDir) / entry.path().filename()).string();
 
             SDebug << "moving file: " << source << " => " << target << endl;
-            fs::rename(source, target);
+            std::filesystem::rename(source, target);
         } catch (std::exception& exc) {
             // The previous version files may be currently in use,
             // in which case PackageManager::finalizeInstallations()
@@ -338,10 +332,7 @@ void InstallTask::doFinalize()
     // was successfully finalized.
     try {
         SDebug << "Removing temp directory: " << tempDir << endl;
-
-        // FIXME: How to remove a folder properly?
-        fs::unlink(tempDir);
-        assert(fs::exists(tempDir));
+        std::filesystem::remove_all(tempDir);
     } catch (std::exception& exc) {
         // While testing on a windows system this fails regularly
         // with a file sharing error, but since the package is already
@@ -356,8 +347,6 @@ void InstallTask::doFinalize()
 void InstallTask::setComplete()
 {
     {
-        assert(_progress == 100);
-
         SInfo << "Package installed: "
               << "Name=" << _local->name() << ", Version=" << _local->version()
               << ", Package State=" << _local->state()
@@ -374,7 +363,6 @@ void InstallTask::setComplete()
     }
 
     // Cancel the runner and schedule for deletion
-    assert(!_runner.cancelled());
     _runner.cancel();
 
     // The task will be destroyed
@@ -396,9 +384,9 @@ Package::Asset InstallTask::getRemoteAsset() const
 {
     return !_options.version.empty()
                ? _remote->assetVersion(_options.version)
-               : !_options.sdkVersion.empty()
-                     ? _remote->latestSDKAsset(_options.sdkVersion)
-                     : _remote->latestAsset();
+           : !_options.sdkVersion.empty()
+               ? _remote->latestSDKAsset(_options.sdkVersion)
+               : _remote->latestAsset();
 }
 
 

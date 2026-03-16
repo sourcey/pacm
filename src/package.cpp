@@ -10,11 +10,10 @@
 
 
 #include "scy/pacm/package.h"
-#include "scy/filesystem.h"
 #include "scy/logger.h"
 #include "scy/util.h"
 
-#include "assert.h"
+#include <filesystem>
 
 
 namespace scy {
@@ -138,9 +137,7 @@ int Package::Asset::fileSize() const
 
 bool Package::Asset::valid() const
 {
-    return root.find("file-name") != root.end()
-        && root.find("version") != root.end()
-        && root.find("mirrors") != root.end();
+    return root.find("file-name") != root.end() && root.find("version") != root.end() && root.find("mirrors") != root.end();
 }
 
 
@@ -159,9 +156,7 @@ Package::Asset& Package::Asset::operator=(const Asset& r)
 
 bool Package::Asset::operator==(const Asset& r) const
 {
-    return fileName() == r.fileName() 
-        && version() == r.version() 
-        && checksum() == r.checksum();
+    return fileName() == r.fileName() && version() == r.version() && checksum() == r.checksum();
 }
 
 
@@ -221,7 +216,7 @@ Package::Asset RemotePackage::assetVersion(const std::string& version)
         throw std::runtime_error("Package has no assets");
 
     int index = -1;
-    for (int i = 1; i < static_cast<int>(assets.size()); i++) {
+    for (int i = 0; i < static_cast<int>(assets.size()); i++) {
         if (assets[i]["version"].get<std::string>() == version) {
             index = i;
             break;
@@ -241,13 +236,13 @@ Package::Asset RemotePackage::latestSDKAsset(const std::string& version)
     if (assets.empty())
         throw std::runtime_error("Package has no assets");
 
+    // Find the asset with the matching SDK version and highest package version
     int index = -1;
-    for (int i = 1; i < static_cast<int>(assets.size()); i++) {
+    for (int i = 0; i < static_cast<int>(assets.size()); i++) {
         if (assets[i]["sdk-version"].get<std::string>() == version &&
             (index == -1 ||
-             (assets[index]["sdk-version"].get<std::string>() != version ||
-              util::compareVersion(assets[i]["version"].get<std::string>(),
-                                   assets[index]["version"].get<std::string>())))) {
+             util::compareVersion(assets[i]["version"].get<std::string>(),
+                                  assets[index]["version"].get<std::string>()))) {
             index = i;
         }
     }
@@ -279,11 +274,11 @@ LocalPackage::LocalPackage(const json::value& src)
 LocalPackage::LocalPackage(const RemotePackage& src)
     : Package(src)
 {
-    assert(src.valid());
+    if (!src.valid())
+        throw std::runtime_error("Cannot create local package from invalid remote package");
 
     // Clear unwanted remote package fields
     erase("assets");
-    assert(valid());
 }
 
 
@@ -306,8 +301,8 @@ LocalPackage::Manifest LocalPackage::manifest()
 
 void LocalPackage::setState(const std::string& state)
 {
-    assert(state == "Installing" || state == "Installed" || state == "Failed" ||
-           state == "Uninstalled");
+    if (state != "Installing" && state != "Installed" && state != "Failed" && state != "Uninstalled")
+        throw std::invalid_argument("Invalid package state: " + state);
 
     (*this)["state"] = state;
 }
@@ -366,7 +361,7 @@ std::string LocalPackage::getInstalledFilePath(const std::string& fileName, bool
         throw std::runtime_error("Package install directory is not set.");
 
     // TODO: What about sub directories?
-    fs::addnode(dir, fileName);
+    dir = (std::filesystem::path(dir) / fileName).string();
     return dir;
 }
 
@@ -417,7 +412,7 @@ bool LocalPackage::verifyInstallManifest(bool allowEmpty)
         std::string path = this->getInstalledFilePath((*it).get<std::string>(), false);
         SDebug << name() << ": Checking exists: " << path << std::endl;
 
-        if (!fs::exists(fs::normalize(path))) {
+        if (!std::filesystem::exists(std::filesystem::path(path).lexically_normal())) {
             SError << name() << ": Missing file: " << path << std::endl;
             return false;
         }
@@ -496,11 +491,6 @@ LocalPackage::Manifest::~Manifest()
 
 void LocalPackage::Manifest::addFile(const std::string& path)
 {
-    // Do not allow duplicates
-    // if (!find_child_by_(*this)["file", "path", path.c_str()).empty())
-    //    return;
-
-    // json::value node(path);
     root.push_back(path);
 }
 
@@ -525,25 +515,29 @@ PackagePair::PackagePair(LocalPackage* local, RemotePackage* remote)
 
 std::string PackagePair::id() const
 {
-    return local ? local->id() : remote ? remote->id() : "";
+    return local ? local->id() : remote ? remote->id()
+                                        : "";
 }
 
 
 std::string PackagePair::name() const
 {
-    return local ? local->name() : remote ? remote->name() : "";
+    return local ? local->name() : remote ? remote->name()
+                                          : "";
 }
 
 
 std::string PackagePair::type() const
 {
-    return local ? local->type() : remote ? remote->type() : "";
+    return local ? local->type() : remote ? remote->type()
+                                          : "";
 }
 
 
 std::string PackagePair::author() const
 {
-    return local ? local->author() : remote ? remote->author() : "";
+    return local ? local->author() : remote ? remote->author()
+                                            : "";
 }
 
 

@@ -3,9 +3,11 @@
 #include "scy/pacm/packagemanager.h"
 #include "scy/util.h"
 
+#include <filesystem>
 
-using std::cout;
+
 using std::cerr;
+using std::cout;
 using std::endl;
 using namespace scy;
 
@@ -134,7 +136,10 @@ public:
             manager.initialize();
             manager.queryRemotePackages();
             scy::Application::run();
-            assert(manager.initialized());
+            if (!manager.initialized()) {
+                cerr << "Package manager failed to initialize" << endl;
+                return;
+            }
 
             // Uninstall packages if requested
             if (!options.uninstall.empty()) {
@@ -200,13 +205,15 @@ int main(int argc, char** argv)
 #endif
 
         // Setup the file logger
-        std::string logPath(getCwd());
-        fs::addnode(logPath, "logs");
-        fs::addnode(logPath, util::format("Pacm_%Ld.log", static_cast<long>(Timestamp().epochTime())));
-        Logger::instance().add(new FileChannel("Pacm", logPath, Level::Debug));
+        std::string logPath = (std::filesystem::path(getCwd()) / "logs" / util::format("Pacm_%Ld.log", static_cast<long>(Timestamp().epochTime()))).string();
+        Logger::instance().add(std::make_unique<FileChannel>("Pacm", logPath, Level::Debug));
 
-        // Init SSL client context
-        net::SSLManager::initNoVerifyClient();
+        // Init SSL client context with certificate verification
+        net::SSLManager::instance().initializeClient(
+            std::make_shared<net::SSLContext>(
+                net::SSLContext::CLIENT_USE, "", "", "",
+                net::SSLContext::VERIFY_RELAXED, 9, true,
+                "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH"));
 
         // Run the application
         {
@@ -218,7 +225,6 @@ int main(int argc, char** argv)
         // Cleanup all singletons
         http::Client::destroy();
         net::SSLManager::destroy();
-        GarbageCollector::destroy();
         Logger::destroy();
     }
 

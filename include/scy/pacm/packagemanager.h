@@ -9,35 +9,48 @@
 /// @{
 
 
-#ifndef SCY_Pacm_PackageManager_H
-#define SCY_Pacm_PackageManager_H
+#pragma once
 
 
+#include "scy/collection.h"
+#include "scy/json/json.h"
 #include "scy/pacm/config.h"
 #include "scy/pacm/installmonitor.h"
 #include "scy/pacm/installtask.h"
 #include "scy/pacm/package.h"
-#include "scy/pacm/types.h"
-#include "scy/collection.h"
-#include "scy/filesystem.h"
-#include "scy/json/json.h"
 #include "scy/platform.h"
 #include "scy/stateful.h"
 #include "scy/task.h"
 
-#include <assert.h>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <stdexcept>
 
 
 namespace scy {
 namespace pacm {
 
 
-typedef LiveCollection<std::string, LocalPackage> LocalPackageStore;
-typedef LocalPackageStore::Map LocalPackageMap;
-typedef LiveCollection<std::string, RemotePackage> RemotePackageStore;
-typedef RemotePackageStore::Map RemotePackageMap;
+/// Validates that a string is safe to use as a path component.
+/// Rejects path traversal sequences (.., /), null bytes, and empty strings.
+inline void validatePathComponent(const std::string& name, const std::string& context)
+{
+    if (name.empty())
+        throw std::invalid_argument(context + ": path component must not be empty");
+    if (name.find("..") != std::string::npos)
+        throw std::invalid_argument(context + ": path traversal detected in '" + name + "'");
+    if (name.find('/') != std::string::npos || name.find('\\') != std::string::npos)
+        throw std::invalid_argument(context + ": directory separator in '" + name + "'");
+    if (name.find('\0') != std::string::npos)
+        throw std::invalid_argument(context + ": null byte in path component");
+}
+
+
+using LocalPackageStore = LiveCollection<std::string, LocalPackage>;
+using LocalPackageMap = LocalPackageStore::Map;
+using RemotePackageStore = LiveCollection<std::string, RemotePackage>;
+using RemotePackageMap = RemotePackageStore::Map;
 
 
 /// The Package Manager provides an interface for managing,
@@ -48,14 +61,14 @@ public:
     /// Package manager initialization options.
     struct Options
     {
-        std::string endpoint; ///< The HTTP server endpoint
-        std::string indexURI; ///< The HTTP server URI for querying packages JSON
-        std::string httpUsername; ///< Username for HTTP basic auth
-        std::string httpPassword; ///< PAssword for HTTP basic auth
+        std::string endpoint;       ///< The HTTP server endpoint
+        std::string indexURI;       ///< The HTTP server URI for querying packages JSON
+        std::string httpUsername;   ///< Username for HTTP basic auth
+        std::string httpPassword;   ///< PAssword for HTTP basic auth
         std::string httpOAuthToken; ///< Will be used instead of HTTP basic if provided
 
-        std::string tempDir; ///< Directory where package files will be downloaded and extracted
-        std::string dataDir; ///< Directory where package manifests will be kept
+        std::string tempDir;    ///< Directory where package files will be downloaded and extracted
+        std::string dataDir;    ///< Directory where package manifests will be kept
         std::string installDir; ///< Directory where packages will be installed
 
         std::string platform;          ///< Platform (win32, linux, mac)
@@ -66,9 +79,9 @@ public:
 
         Options(const std::string& root = getCwd())
         {
-            tempDir = root + fs::separator + DEFAULT_PACKAGE_TEMP_DIR;
-            dataDir = root + fs::separator + DEFAULT_PACKAGE_DATA_DIR;
-            installDir = root + fs::separator + DEFAULT_PACKAGE_INSTALL_DIR;
+            tempDir = (std::filesystem::path(root) / DEFAULT_PACKAGE_TEMP_DIR).string();
+            dataDir = (std::filesystem::path(root) / DEFAULT_PACKAGE_DATA_DIR).string();
+            installDir = (std::filesystem::path(root) / DEFAULT_PACKAGE_INSTALL_DIR).string();
             endpoint = DEFAULT_API_ENDPOINT;
             indexURI = DEFAULT_API_INDEX_URI;
             platform = DEFAULT_PLATFORM;
@@ -79,7 +92,12 @@ public:
 
 public:
     PackageManager(const Options& options = Options());
-    virtual ~PackageManager();
+    virtual ~PackageManager() noexcept;
+
+    PackageManager(const PackageManager&) = delete;
+    PackageManager& operator=(const PackageManager&) = delete;
+    PackageManager(PackageManager&&) = delete;
+    PackageManager& operator=(PackageManager&&) = delete;
 
     //
     /// Initialization Methods
@@ -211,8 +229,8 @@ public:
     virtual PackagePair getOrCreatePackagePair(const std::string& id);
 
     /// Creates a package installation task for the given pair.
-    virtual InstallTask::Ptr createInstallTask(PackagePair& pair, 
-        const InstallOptions& options = InstallOptions());
+    virtual InstallTask::Ptr createInstallTask(PackagePair& pair,
+                                               const InstallOptions& options = InstallOptions());
 
     /// Returns the version number of an installed package.
     /// Exceptions will be thrown if the package does not exist,
@@ -282,7 +300,6 @@ public:
     Signal<void(const InstallTask&)> InstallTaskComplete;
 
 protected:
-
     //
     /// Callbacks
 
@@ -299,9 +316,6 @@ protected:
 
 } // namespace pacm
 } // namespace scy
-
-
-#endif // SCY_Pacm_PackageManager_H
 
 
 /// @\}

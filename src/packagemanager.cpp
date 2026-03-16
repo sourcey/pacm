@@ -17,6 +17,8 @@
 #include "scy/pacm/package.h"
 #include "scy/util.h"
 
+#include <memory>
+
 
 using namespace std;
 
@@ -74,9 +76,9 @@ void PackageManager::cancelAllTasks()
 void PackageManager::createDirectories()
 {
     std::lock_guard<std::mutex> guard(_mutex);
-    fs::mkdirr(_options.tempDir);
-    fs::mkdirr(_options.dataDir);
-    fs::mkdirr(_options.installDir);
+    std::filesystem::create_directories(_options.tempDir);
+    std::filesystem::create_directories(_options.dataDir);
+    std::filesystem::create_directories(_options.installDir);
 }
 
 
@@ -108,9 +110,7 @@ void PackageManager::queryRemotePackages()
         }
 
         conn->Complete += [&](const http::Response& response) {
-            STrace << "On package response complete: " << response
-                   // << conn->readStream<std::stringstream>().str()
-                   << endl;
+            STrace << "On package response complete: " << response << endl;
 
             parseRemotePackages(conn->readStream<std::stringstream>().str());
             RemotePackageResponse.emit(response);
@@ -132,16 +132,15 @@ void PackageManager::parseRemotePackages(const std::string& data)
         _remotePackages.clear();
 
         for (auto it = root.begin(); it != root.end(); it++) {
-            auto package = new RemotePackage(*it);
+            auto package = std::make_unique<RemotePackage>(*it);
             if (!package->valid()) {
                 SError << "Invalid package: " << package->id() << endl;
-                delete package;
                 continue;
             }
-            _remotePackages.add(package->id(), package);
+            auto id = package->id();
+            _remotePackages.add(id, std::move(package));
         }
-    }
-    catch (std::invalid_argument& exc) {
+    } catch (std::invalid_argument& exc) {
         SError << "Invalid server JSON response: " << exc.what() << endl;
         throw exc;
     }
@@ -169,29 +168,25 @@ void PackageManager::loadLocalPackages(const std::string& dir)
 {
     SDebug << "Loading manifests: " << dir << endl;
 
-    StringVec nodes;
-    fs::readdir(dir, nodes);
-    for (unsigned i = 0; i < nodes.size(); i++) {
-        if (nodes[i].find(".json") != std::string::npos) {
-            LocalPackage* package = nullptr;
+    for (const auto& entry : std::filesystem::directory_iterator(dir)) {
+        std::string filename = entry.path().filename().string();
+        if (filename.find(".json") != std::string::npos) {
             try {
-                std::string path(dir);
-                fs::addnode(path, nodes[i]);
+                std::string path = entry.path().string();
                 json::value root;
                 json::loadFile(path, root);
 
                 SDebug << "Loading package manifest: " << path << endl;
-                package = new LocalPackage(root);
+                auto package = std::make_unique<LocalPackage>(root);
                 if (!package->valid()) {
                     throw std::runtime_error("The local package is invalid.");
                 }
 
                 SDebug << "local package added: " << package->name() << endl;
-                localPackages().add(package->id(), package);
+                auto id = package->id();
+                localPackages().add(id, std::move(package));
             } catch (std::exception& exc) {
                 SError << "Cannot load local package: " << exc.what() << endl;
-                if (package)
-                    delete package;
             }
         }
     }
@@ -203,9 +198,9 @@ bool PackageManager::saveLocalPackages(bool whiny)
     STrace << "Saving local packages" << endl;
 
     bool res = true;
-    LocalPackageMap toSave = localPackages().map();
-    for (auto it = toSave.begin(); it != toSave.end(); ++it) {
-        if (!saveLocalPackage(static_cast<LocalPackage&>(*it->second), whiny))
+    auto& toSave = localPackages().map();
+    for (auto& [key, pkg] : toSave) {
+        if (!saveLocalPackage(static_cast<LocalPackage&>(*pkg), whiny))
             res = false;
     }
     return res;
@@ -216,6 +211,7 @@ bool PackageManager::saveLocalPackage(LocalPackage& package, bool whiny)
 {
     bool res = false;
     try {
+        validatePathComponent(package.id(), "saveLocalPackage");
         std::string path(util::format("%s/%s.json", options().dataDir.c_str(),
                                       package.id().c_str()));
         SDebug << "Saving local package: " << package.id() << endl;
@@ -306,7 +302,6 @@ PackageManager::getLatestInstallableAsset(const PackagePair& pair,
 
         // Get the latest asset for locked SDK version or throw
         Package::Asset asset = pair.remote->assetVersion(version);
-        assert(asset.version() == version);
 
         // Throw if we are already running the locked version
         if (isInstalledAndVerified &&
@@ -335,7 +330,6 @@ PackageManager::getLatestInstallableAsset(const PackagePair& pair,
 
         // Get the latest asset for SDK version or throw
         Package::Asset sdkAsset = pair.remote->latestSDKAsset(sdkVersion);
-        assert(sdkAsset.sdkVersion() == sdkVersion);
 
         // Throw if there are no newer assets for the locked version
         if (isInstalledAndVerified &&
@@ -356,53 +350,6 @@ PackageManager::getLatestInstallableAsset(const PackagePair& pair,
 
     // Return the newer asset
     return latestAsset;
-
-#if 0
-    // Return true if the locked version is already installed
-    if (!pair.local->versionLock().empty() || !options.version.empty()) {
-        std::string versionLock = options.version.empty() ? pair.local->versionLock() : options.version;
-        //assert();
-        // TODO: assert valid version?
-
-        // Make sure the version option matches the lock, if both were set
-        if (!options.version.empty() && !pair.local->versionLock().empty() &&
-            options.version != pair.local->versionLock())
-            throw std::runtime_error("Invalid version option: Package locked at version: " + pair.local->versionLock());
-
-        // If everything is in order there is nothing to install
-        if (isInstalledAndVerified && pair.local->versionLock() == pair.local->version())
-            throw std::runtime_error("Package is up-to-date. Locked at version: " + pair.local->versionLock());
-
-        // Return the locked asset, or throw
-        return pair.remote->assetVersion(versionLock);
-    }
-
-    // Get the best asset from the locked SDK version, if applicable
-    if (!pair.local->sdkLockedVersion().empty() || !options.sdkVersion.empty()) {
-
-        // Make sure the version option matches the lock, if both were set
-        if (!options.sdkVersion.empty() && !pair.local->sdkLockedVersion().empty() &&
-            options.sdkVersion != pair.local->sdkLockedVersion())
-            throw std::runtime_error("Invalid SDK version option: Package locked at SDK version: " + pair.local->sdkLockedVersion());
-
-        // Get the latest asset for SDK version
-        Package::Asset sdkAsset = pair.remote->latestSDKAsset(pair.local->sdkLockedVersion()); // throw if none
-
-        // If everything is in order there is nothing to install
-        if (isInstalledAndVerified && pair.local->asset().sdkVersion() == pair.local->sdkLockedVersion() &&
-            !util::compareVersion(sdkAsset.version(), pair.local->version()))
-            throw std::runtime_error("Package is up-to-date for SDK: " + pair.local->sdkLockedVersion());
-
-        return sdkAsset;
-    }
-
-    // If all else fails return the latest asset!
-    Package::Asset latestAsset = pair.remote->latestAsset();
-    if (isInstalledAndVerified && !util::compareVersion(latestAsset.version(), pair.local->version()))
-        throw std::runtime_error("Package is up-to-date.");
-
-    return latestAsset;
-#endif
 }
 
 
@@ -491,9 +438,8 @@ bool PackageManager::updatePackages(const StringVec& ids,
 bool PackageManager::updateAllPackages(bool whiny)
 {
     StringVec toUpdate;
-    auto& packages = localPackages().map();
-    for (auto it = packages.begin(); it != packages.end(); ++it) {
-        toUpdate.push_back(it->first);
+    for (const auto& [id, pkg] : localPackages().map()) {
+        toUpdate.push_back(id);
     }
 
     InstallOptions options;
@@ -518,7 +464,7 @@ bool PackageManager::uninstallPackage(const std::string& id, bool whiny)
                     std::string path(package->getInstalledFilePath((*it).get<std::string>()));
                     SDebug << "Delete file: " << path << endl;
                     try {
-                        fs::unlink(path);
+                        std::filesystem::remove(path);
                     } catch (std::exception& exc) {
                         SError << "Error deleting file: " << exc.what() << ": "
                                << path << endl;
@@ -530,11 +476,12 @@ bool PackageManager::uninstallPackage(const std::string& id, bool whiny)
             }
 
             // Delete package manifest file
+            validatePathComponent(package->id(), "uninstallPackage");
             std::string path(options().dataDir);
-            fs::addnode(path, package->id() + ".json"); // manifest_
+            path = (std::filesystem::path(path) / (package->id() + ".json")).string(); // manifest_
 
             SDebug << "Delete manifest: " << path << endl;
-            fs::unlink(path);
+            std::filesystem::remove(path);
         } catch (std::exception& exc) {
             SError << "Nonfatal uninstall error: " << exc.what() << endl;
             // Swallow and continue...
@@ -546,9 +493,8 @@ bool PackageManager::uninstallPackage(const std::string& id, bool whiny)
         // Notify the outside application
         PackageUninstalled.emit(*package);
 
-        // Free package reference from memory
-        localPackages().remove(package);
-        delete package;
+        // Free package reference from memory (unique_ptr handles deletion)
+        localPackages().free(package->id());
     } catch (std::exception& exc) {
         SError << "Fatal uninstall error: " << exc.what() << endl;
         if (whiny)
@@ -563,7 +509,7 @@ bool PackageManager::uninstallPackage(const std::string& id, bool whiny)
 
 bool PackageManager::uninstallPackages(const StringVec& ids, bool whiny)
 {
-    SDebug << "Uuninstall packages: " << ids.size() << endl;
+    SDebug << "Uninstall packages: " << ids.size() << endl;
     bool res = true;
     for (auto it = ids.begin(); it != ids.end(); ++it) {
         if (!uninstallPackage(*it, whiny))
@@ -598,10 +544,10 @@ bool PackageManager::hasUnfinalizedPackages()
 
     bool res = false;
     auto& packages = localPackages().map();
-    for (auto it = packages.begin(); it != packages.end(); ++it) {
-        if (it->second->state() == "Installing" &&
-            it->second->installState() == "Finalizing") {
-            SDebug << "finalization required: " << it->second->name() << endl;
+    for (auto& [key, pkg] : packages) {
+        if (pkg->state() == "Installing" &&
+            pkg->installState() == "Finalizing") {
+            SDebug << "finalization required: " << pkg->name() << endl;
             res = true;
         }
     }
@@ -616,30 +562,22 @@ bool PackageManager::finalizeInstallations(bool whiny)
 
     bool res = true;
     auto& packages = localPackages().map();
-    for (auto it = packages.begin(); it != packages.end(); ++it) {
+    for (auto& [key, pkg] : packages) {
         try {
-            if (it->second->state() == "Installing" &&
-                it->second->installState() == "Finalizing") {
-                SDebug << "Finalizing: " << it->second->name() << endl;
+            if (pkg->state() == "Installing" &&
+                pkg->installState() == "Finalizing") {
+                SDebug << "Finalizing: " << pkg->name() << endl;
 
                 // Create an install task on the stack - we only have
                 // to move some files around so no async required.
-                InstallTask task(*this, it->second, nullptr);
+                InstallTask task(*this, pkg.get(), nullptr);
                 task.doFinalize();
 
-                assert(it->second->state() == "Installed" &&
-                       it->second->installState() == "Installed");
+                if (pkg->state() != "Installed" || pkg->installState() != "Installed")
+                    LWarn("Package not in expected state after finalization");
 
                 // Manually emit the install complete signal.
                 InstallTaskComplete.emit(task);
-
-                // if (it->second->state() != "Installed" ||
-                //     it->second->installState() != "Installed") {
-                //     res = false;
-                //     if (whiny)
-                //         throw std::runtime_error(it->second->name() + ":
-                // Finalization failed");
-                // }
             }
         } catch (std::exception& exc) {
             SError << "Finalize Error: " << exc.what() << endl;
@@ -649,7 +587,7 @@ bool PackageManager::finalizeInstallations(bool whiny)
         }
 
         // Always save the package.
-        saveLocalPackage(*it->second, false);
+        saveLocalPackage(*pkg, false);
     }
 
     return res;
@@ -725,22 +663,22 @@ PackagePairVec PackageManager::getPackagePairs() const
 {
     PackagePairVec pairs;
     std::lock_guard<std::mutex> guard(_mutex);
-    auto lpackages = _localPackages.map();  // copy
-    auto rpackages = _remotePackages.map(); // copy
-    for (auto lit = lpackages.begin(); lit != lpackages.end(); ++lit) {
-        pairs.push_back(PackagePair(lit->second));
+    auto& lpackages = _localPackages.map();
+    auto& rpackages = _remotePackages.map();
+    for (auto& [key, pkg] : lpackages) {
+        pairs.push_back(PackagePair(pkg.get()));
     }
-    for (auto rit = rpackages.begin(); rit != rpackages.end(); ++rit) {
+    for (auto& [key, pkg] : rpackages) {
         bool exists = false;
         for (unsigned i = 0; i < pairs.size(); i++) {
-            if (pairs[i].id() == rit->second->id()) {
-                pairs[i].remote = rit->second;
+            if (pairs[i].id() == pkg->id()) {
+                pairs[i].remote = pkg.get();
                 exists = true;
                 break;
             }
         }
         if (!exists)
-            pairs.push_back(PackagePair(nullptr, rit->second));
+            pairs.push_back(PackagePair(nullptr, pkg.get()));
     }
     return pairs;
 }
@@ -778,8 +716,9 @@ PackagePair PackageManager::getOrCreatePackagePair(const std::string& id)
     // Get or create the local package description.
     auto local = _localPackages.get(id, false);
     if (!local) {
-        local = new LocalPackage(*remote);
-        _localPackages.add(id, local);
+        auto pkg = std::make_unique<LocalPackage>(*remote);
+        local = pkg.get();
+        _localPackages.add(id, std::move(pkg));
     }
 
     if (!local->valid())
@@ -803,48 +742,15 @@ string PackageManager::installedPackageVersion(const std::string& id) const
 }
 
 
-#if 0
-bool PackageManager::hasAvailableUpdates(PackagePair& pair)
-{
-    assert(pair.valid());
-    return pair.local && pair.remote &&
-        pair.local->hasAvailableUpdates(*pair.remote);
-}
-
-
-bool PackageManager::verifyInstallManifest(LocalPackage& package)
-{
-    SDebug << package.name()
-        << ": Verifying install manifest" << endl;
-
-    // Check file system for each manifest file
-    LocalPackage::Manifest manifest = package.manifest();
-    for (auto it = manifest.root.begin(); it != manifest.root.end(); it++) {
-        std::string path = package.getInstalledFilePath((*it).get<std::string>(), false);
-        SDebug << package.name()
-            << ": Checking: " << path << endl;
-        File file(path);
-        if (!file.exists()) {
-            SError << package.name()
-                << ": Missing package file: " << path << endl;
-            return false;
-        }
-    }
-
-    return true;
-}
-#endif
-
-
 // ---------------------------------------------------------------------
 // File Helper Methods
 //
 void PackageManager::clearCache()
 {
     std::string dir(options().tempDir);
-    fs::addsep(dir);
-    fs::rmdir(dir); // remove it
-    assert(!fs::exists(dir));
+    std::filesystem::remove_all(dir); // remove it
+    if (std::filesystem::exists(dir))
+        LWarn("Failed to fully remove cache directory: ", dir);
 }
 
 
@@ -864,9 +770,8 @@ bool PackageManager::clearPackageCache(LocalPackage& package)
 bool PackageManager::clearCacheFile(const std::string& fileName, bool whiny)
 {
     try {
-        std::string path(options().tempDir);
-        fs::addnode(path, fileName);
-        fs::unlink(path);
+        std::string path = (std::filesystem::path(options().tempDir) / fileName).string();
+        std::filesystem::remove(path);
         return true;
     } catch (std::exception& exc) {
         SError << "Clear Cache Error: " << fileName << ": " << exc.what()
@@ -880,9 +785,19 @@ bool PackageManager::clearCacheFile(const std::string& fileName, bool whiny)
 
 bool PackageManager::hasCachedFile(Package::Asset& asset)
 {
-    std::string path(options().tempDir);
-    fs::addnode(path, asset.fileName());
-    return fs::exists(path); // TODO: crc and size check
+    std::string path = (std::filesystem::path(options().tempDir) / asset.fileName()).string();
+    if (!std::filesystem::exists(path))
+        return false;
+
+    // Validate file size if the asset specifies one
+    int expectedSize = asset.fileSize();
+    if (expectedSize > 0) {
+        auto actualSize = std::filesystem::file_size(path);
+        if (static_cast<uintmax_t>(expectedSize) != actualSize)
+            return false;
+    }
+
+    return true;
 }
 
 
@@ -895,17 +810,16 @@ bool PackageManager::isSupportedFileType(const std::string& fileName)
 
 std::string PackageManager::getCacheFilePath(const std::string& fileName)
 {
-    std::string dir(options().tempDir);
-    fs::addnode(dir, fileName);
-    return dir;
+    validatePathComponent(fileName, "getCacheFilePath");
+    return (std::filesystem::path(options().tempDir) / fileName).string();
 }
 
 
 std::string PackageManager::getPackageDataDir(const std::string& id)
 {
-    std::string dir(options().dataDir);
-    fs::addnode(dir, id);
-    fs::mkdirr(dir); // create it
+    validatePathComponent(id, "getPackageDataDir");
+    std::string dir = (std::filesystem::path(options().dataDir) / id).string();
+    std::filesystem::create_directories(dir); // create it
     return dir;
 }
 

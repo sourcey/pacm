@@ -67,7 +67,8 @@ void InstallMonitor::onInstallComplete(InstallTask& task)
             }
         }
 
-        progress = (_packages.size() - _tasks.size()) / _packages.size();
+        if (!_packages.empty())
+            progress = static_cast<int>((_packages.size() - _tasks.size()) * 100 / _packages.size());
 
         SInfo << "Waiting on " << _tasks.size() << " packages to complete"
               << endl;
@@ -96,16 +97,16 @@ void InstallMonitor::addTask(InstallTask::Ptr task)
 void InstallMonitor::startAll()
 {
     std::lock_guard<std::mutex> guard(_mutex);
-    for (auto it = _tasks.begin(); it != _tasks.end(); it++)
-        (*it)->start();
+    for (auto& task : _tasks)
+        task->start();
 }
 
 
 void InstallMonitor::cancelAll()
 {
     std::lock_guard<std::mutex> guard(_mutex);
-    for (auto it = _tasks.begin(); it != _tasks.end(); it++)
-        (*it)->cancel();
+    for (auto& task : _tasks)
+        task->cancel();
 }
 
 

@@ -9,8 +9,7 @@
 /// @{
 
 
-#ifndef SCY_Pacm_InstallMonitor_H
-#define SCY_Pacm_InstallMonitor_H
+#pragma once
 
 
 #include "scy/pacm/installtask.h"
@@ -20,14 +19,19 @@ namespace scy {
 namespace pacm {
 
 
-typedef std::vector<LocalPackage*> LocalPackageVec;
+using LocalPackageVec = std::vector<LocalPackage*>;
 
 
 class Pacm_API InstallMonitor
 {
 public:
     InstallMonitor();
-    virtual ~InstallMonitor();
+    virtual ~InstallMonitor() noexcept;
+
+    InstallMonitor(const InstallMonitor&) = delete;
+    InstallMonitor& operator=(const InstallMonitor&) = delete;
+    InstallMonitor(InstallMonitor&&) = delete;
+    InstallMonitor& operator=(InstallMonitor&&) = delete;
 
     /// Adds a task to monitor.
     virtual void addTask(InstallTask::Ptr task);
@@ -95,9 +99,6 @@ inline std::string getInstallTaskNamesString(LocalPackageVec& packages)
 
 } // namespace pacm
 } // namespace scy
-
-
-#endif // SCY_Pacm_InstallMonitor_H
 
 
 /// @\}

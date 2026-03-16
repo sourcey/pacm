@@ -9,15 +9,14 @@
 /// @{
 
 
-#ifndef SCY_Pacm_InstallTask_H
-#define SCY_Pacm_InstallTask_H
+#pragma once
 
 
-#include "scy/pacm/config.h"
-#include "scy/pacm/package.h"
 #include "scy/http/client.h"
 #include "scy/idler.h"
 #include "scy/logger.h"
+#include "scy/pacm/config.h"
+#include "scy/pacm/package.h"
 #include "scy/stateful.h"
 
 
@@ -59,9 +58,8 @@ struct InstallationState : public State
             case Failed:
                 return "Failed";
             default:
-                assert(false);
+                return "undefined";
         }
-        return "undefined";
     }
 };
 
@@ -84,15 +82,21 @@ struct InstallOptions
 
 
 /// This class implements the package installation procedure.
-class Pacm_API InstallTask : public basic::Runnable, public Stateful<InstallationState>
+class Pacm_API InstallTask : public basic::Runnable
+    , public Stateful<InstallationState>
 {
 public:
-    typedef std::shared_ptr<InstallTask> Ptr;
+    using Ptr = std::shared_ptr<InstallTask>;
 
     InstallTask(PackageManager& manager, LocalPackage* local, RemotePackage* remote,
                 const InstallOptions& options = InstallOptions(),
                 uv::Loop* loop = uv::defaultLoop());
-    virtual ~InstallTask();
+    virtual ~InstallTask() noexcept;
+
+    InstallTask(const InstallTask&) = delete;
+    InstallTask& operator=(const InstallTask&) = delete;
+    InstallTask(InstallTask&&) = delete;
+    InstallTask& operator=(InstallTask&&) = delete;
 
     virtual void start();
     virtual void cancel();
@@ -164,15 +168,12 @@ protected:
 };
 
 
-typedef std::vector<InstallTask*> InstallTaskVec;
-typedef std::vector<InstallTask::Ptr> InstallTaskPtrVec;
+using InstallTaskVec = std::vector<InstallTask*>;
+using InstallTaskPtrVec = std::vector<InstallTask::Ptr>;
 
 
 } // namespace pacm
 } // namespace scy
-
-
-#endif // SCY_Pacm_InstallTask_H
 
 
 /// @\}
