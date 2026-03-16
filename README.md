@@ -13,8 +13,9 @@
 Pacm is part of the [LibSourcey](https://github.com/sourcey/libsourcey) project. To build:
 
 ~~~ bash
-git clone --recurse-submodules https://github.com/sourcey/libsourcey.git
+git clone https://github.com/sourcey/libsourcey.git
 cd libsourcey
+git submodule update --init src/pacm
 cmake -B build -DBUILD_MODULE_pacm=ON -DBUILD_TESTS=ON
 cmake --build build
 ~~~
