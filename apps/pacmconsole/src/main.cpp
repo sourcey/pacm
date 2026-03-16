@@ -1,9 +1,8 @@
 #include "scy/application.h"
+#include "scy/filesystem.h"
 #include "scy/net/sslmanager.h"
 #include "scy/pacm/packagemanager.h"
 #include "scy/util.h"
-
-#include <filesystem>
 
 
 using std::cerr;
@@ -205,7 +204,7 @@ int main(int argc, char** argv)
 #endif
 
         // Setup the file logger
-        std::string logPath = (std::filesystem::path(getCwd()) / "logs" / util::format("Pacm_%Ld.log", static_cast<long>(Timestamp().epochTime()))).string();
+        std::string logPath = fs::makePath(fs::makePath(getCwd(), "logs"), util::format("Pacm_%Ld.log", static_cast<long>(Timestamp().epochTime())));
         Logger::instance().add(std::make_unique<FileChannel>("Pacm", logPath, Level::Debug));
 
         // Init SSL client context with certificate verification

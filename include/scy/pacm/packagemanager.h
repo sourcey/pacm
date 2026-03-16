@@ -20,9 +20,8 @@
 #include "scy/pacm/package.h"
 #include "scy/platform.h"
 #include "scy/stateful.h"
+#include "scy/filesystem.h"
 #include "scy/task.h"
-
-#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -79,9 +78,9 @@ public:
 
         Options(const std::string& root = getCwd())
         {
-            tempDir = (std::filesystem::path(root) / DEFAULT_PACKAGE_TEMP_DIR).string();
-            dataDir = (std::filesystem::path(root) / DEFAULT_PACKAGE_DATA_DIR).string();
-            installDir = (std::filesystem::path(root) / DEFAULT_PACKAGE_INSTALL_DIR).string();
+            tempDir = fs::makePath(root, DEFAULT_PACKAGE_TEMP_DIR);
+            dataDir = fs::makePath(root, DEFAULT_PACKAGE_DATA_DIR);
+            installDir = fs::makePath(root, DEFAULT_PACKAGE_INSTALL_DIR);
             endpoint = DEFAULT_API_ENDPOINT;
             indexURI = DEFAULT_API_INDEX_URI;
             platform = DEFAULT_PLATFORM;

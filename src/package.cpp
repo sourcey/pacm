@@ -10,10 +10,9 @@
 
 
 #include "scy/pacm/package.h"
+#include "scy/filesystem.h"
 #include "scy/logger.h"
 #include "scy/util.h"
-
-#include <filesystem>
 
 
 namespace scy {
@@ -361,7 +360,7 @@ std::string LocalPackage::getInstalledFilePath(const std::string& fileName, bool
         throw std::runtime_error("Package install directory is not set.");
 
     // TODO: What about sub directories?
-    dir = (std::filesystem::path(dir) / fileName).string();
+    dir = fs::makePath(dir, fileName);
     return dir;
 }
 
@@ -412,7 +411,7 @@ bool LocalPackage::verifyInstallManifest(bool allowEmpty)
         std::string path = this->getInstalledFilePath((*it).get<std::string>(), false);
         SDebug << name() << ": Checking exists: " << path << std::endl;
 
-        if (!std::filesystem::exists(std::filesystem::path(path).lexically_normal())) {
+        if (!fs::exists(fs::normalize(path))) {
             SError << name() << ": Missing file: " << path << std::endl;
             return false;
         }

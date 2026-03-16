@@ -19,8 +19,9 @@
 #include "scy/pacm/package.h"
 #include "scy/pacm/packagemanager.h"
 
+#include "scy/filesystem.h"
+
 #include <algorithm>
-#include <filesystem>
 
 using namespace std;
 
@@ -86,11 +87,11 @@ void InstallTask::start()
     }
 
     // Normalize lazy windows paths
-    _options.installDir = std::filesystem::path(_options.installDir).lexically_normal().string();
+    _options.installDir = fs::normalize(_options.installDir);
     _local->setInstallDir(_options.installDir);
 
     // Create the directory
-    std::filesystem::create_directories(_options.installDir);
+    fs::mkdirr(_options.installDir);
 
     // If the package failed previously we might need
     // to clear the file cache.
@@ -243,11 +244,11 @@ void InstallTask::doExtract()
 
     // Get the input file and check veracity
     std::string archivePath(_manager.getCacheFilePath(asset.fileName()));
-    if (!std::filesystem::exists(archivePath))
+    if (!fs::exists(archivePath))
         throw std::runtime_error("The local package file does not exist: " + archivePath);
     if (!_manager.isSupportedFileType(asset.fileName()))
         throw std::runtime_error(
-            "The local package has an unsupported file extension: " + std::filesystem::path(archivePath).extension().string());
+            "The local package has an unsupported file extension: " + fs::extname(archivePath));
 
     // Verify file checksum if one was provided
     std::string originalChecksum(asset.checksum());
@@ -257,7 +258,7 @@ void InstallTask::doExtract()
         SDebug << "Verify checksum: original=" << originalChecksum
                << ", computed=" << computedChecksum << endl;
         if (originalChecksum != computedChecksum)
-            throw std::runtime_error("Checksum verification failed: " + std::filesystem::path(archivePath).extension().string());
+            throw std::runtime_error("Checksum verification failed: " + fs::extname(archivePath));
     }
 
     // Create the output directory
@@ -297,17 +298,18 @@ void InstallTask::doFinalize()
     std::string installDir = options().installDir;
 
     // Ensure the install directory exists
-    std::filesystem::create_directories(installDir);
+    fs::mkdirr(installDir);
     SDebug << "Finalizing to: " << installDir << endl;
 
     // Move all extracted files to the installation path
-    for (const auto& entry : std::filesystem::directory_iterator(tempDir)) {
+    std::vector<std::string> entries;
+    fs::readdir(tempDir, entries);
+    for (const auto& source : entries) {
         try {
-            std::string source = entry.path().string();
-            std::string target = (std::filesystem::path(installDir) / entry.path().filename()).string();
+            std::string target = fs::makePath(installDir, fs::filename(source));
 
             SDebug << "moving file: " << source << " => " << target << endl;
-            std::filesystem::rename(source, target);
+            fs::rename(source, target);
         } catch (std::exception& exc) {
             // The previous version files may be currently in use,
             // in which case PackageManager::finalizeInstallations()
@@ -332,7 +334,7 @@ void InstallTask::doFinalize()
     // was successfully finalized.
     try {
         SDebug << "Removing temp directory: " << tempDir << endl;
-        std::filesystem::remove_all(tempDir);
+        fs::rmdir(tempDir);
     } catch (std::exception& exc) {
         // While testing on a windows system this fails regularly
         // with a file sharing error, but since the package is already

@@ -10,6 +10,7 @@
 
 
 #include "scy/pacm/packagemanager.h"
+#include "scy/filesystem.h"
 #include "scy/http/authenticator.h"
 #include "scy/http/client.h"
 #include "scy/json/json.h"
@@ -76,9 +77,9 @@ void PackageManager::cancelAllTasks()
 void PackageManager::createDirectories()
 {
     std::lock_guard<std::mutex> guard(_mutex);
-    std::filesystem::create_directories(_options.tempDir);
-    std::filesystem::create_directories(_options.dataDir);
-    std::filesystem::create_directories(_options.installDir);
+    fs::mkdirr(_options.tempDir);
+    fs::mkdirr(_options.dataDir);
+    fs::mkdirr(_options.installDir);
 }
 
 
@@ -168,11 +169,12 @@ void PackageManager::loadLocalPackages(const std::string& dir)
 {
     SDebug << "Loading manifests: " << dir << endl;
 
-    for (const auto& entry : std::filesystem::directory_iterator(dir)) {
-        std::string filename = entry.path().filename().string();
+    std::vector<std::string> dirEntries;
+    fs::readdir(dir, dirEntries);
+    for (const auto& path : dirEntries) {
+        std::string filename = fs::filename(path);
         if (filename.find(".json") != std::string::npos) {
             try {
-                std::string path = entry.path().string();
                 json::value root;
                 json::loadFile(path, root);
 
@@ -464,7 +466,7 @@ bool PackageManager::uninstallPackage(const std::string& id, bool whiny)
                     std::string path(package->getInstalledFilePath((*it).get<std::string>()));
                     SDebug << "Delete file: " << path << endl;
                     try {
-                        std::filesystem::remove(path);
+                        fs::unlink(path);
                     } catch (std::exception& exc) {
                         SError << "Error deleting file: " << exc.what() << ": "
                                << path << endl;
@@ -478,10 +480,10 @@ bool PackageManager::uninstallPackage(const std::string& id, bool whiny)
             // Delete package manifest file
             validatePathComponent(package->id(), "uninstallPackage");
             std::string path(options().dataDir);
-            path = (std::filesystem::path(path) / (package->id() + ".json")).string(); // manifest_
+            path = fs::makePath(path, package->id() + ".json"); // manifest_
 
             SDebug << "Delete manifest: " << path << endl;
-            std::filesystem::remove(path);
+            fs::unlink(path);
         } catch (std::exception& exc) {
             SError << "Nonfatal uninstall error: " << exc.what() << endl;
             // Swallow and continue...
@@ -748,8 +750,8 @@ string PackageManager::installedPackageVersion(const std::string& id) const
 void PackageManager::clearCache()
 {
     std::string dir(options().tempDir);
-    std::filesystem::remove_all(dir); // remove it
-    if (std::filesystem::exists(dir))
+    fs::rmdir(dir); // remove it
+    if (fs::exists(dir))
         LWarn("Failed to fully remove cache directory: ", dir);
 }
 
@@ -770,8 +772,8 @@ bool PackageManager::clearPackageCache(LocalPackage& package)
 bool PackageManager::clearCacheFile(const std::string& fileName, bool whiny)
 {
     try {
-        std::string path = (std::filesystem::path(options().tempDir) / fileName).string();
-        std::filesystem::remove(path);
+        std::string path = fs::makePath(options().tempDir, fileName);
+        fs::unlink(path);
         return true;
     } catch (std::exception& exc) {
         SError << "Clear Cache Error: " << fileName << ": " << exc.what()
@@ -785,14 +787,14 @@ bool PackageManager::clearCacheFile(const std::string& fileName, bool whiny)
 
 bool PackageManager::hasCachedFile(Package::Asset& asset)
 {
-    std::string path = (std::filesystem::path(options().tempDir) / asset.fileName()).string();
-    if (!std::filesystem::exists(path))
+    std::string path = fs::makePath(options().tempDir, asset.fileName());
+    if (!fs::exists(path))
         return false;
 
     // Validate file size if the asset specifies one
     int expectedSize = asset.fileSize();
     if (expectedSize > 0) {
-        auto actualSize = std::filesystem::file_size(path);
+        auto actualSize = fs::filesize(path);
         if (static_cast<uintmax_t>(expectedSize) != actualSize)
             return false;
     }
@@ -811,15 +813,15 @@ bool PackageManager::isSupportedFileType(const std::string& fileName)
 std::string PackageManager::getCacheFilePath(const std::string& fileName)
 {
     validatePathComponent(fileName, "getCacheFilePath");
-    return (std::filesystem::path(options().tempDir) / fileName).string();
+    return fs::makePath(options().tempDir, fileName);
 }
 
 
 std::string PackageManager::getPackageDataDir(const std::string& id)
 {
     validatePathComponent(id, "getPackageDataDir");
-    std::string dir = (std::filesystem::path(options().dataDir) / id).string();
-    std::filesystem::create_directories(dir); // create it
+    std::string dir = fs::makePath(options().dataDir, id);
+    fs::mkdirr(dir); // create it
     return dir;
 }
 
