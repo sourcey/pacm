@@ -1,1 +1,1 @@
-add_subdirectory(pacmconsole)
+add_subdirectory(pacm-cli)
