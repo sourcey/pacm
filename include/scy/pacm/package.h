@@ -21,14 +21,14 @@ namespace pacm {
 
 /// This class is a JSON representation of an
 /// package belonging to the PackageManager.
-struct Package : public json::value
+struct Package : public json::Value
 {
     /// This class represents a archived file
     /// asset containing files belonging to
     /// the parent package.
     struct Asset
     {
-        Asset(json::value& src);
+        Asset(json::Value& src);
         Asset(const Asset&) = default;
         virtual ~Asset() noexcept;
 
@@ -46,11 +46,11 @@ struct Package : public json::value
         virtual Asset& operator=(const Asset& r);
         virtual bool operator==(const Asset& r) const;
 
-        json::value& root;
+        json::Value& root;
     };
 
     Package();
-    Package(const json::value& src);
+    Package(const json::Value& src);
     virtual ~Package() noexcept;
 
     virtual std::string id() const;
@@ -75,10 +75,10 @@ struct Package : public json::value
 struct RemotePackage : public Package
 {
     RemotePackage();
-    RemotePackage(const json::value& src);
+    RemotePackage(const json::Value& src);
     virtual ~RemotePackage() noexcept;
 
-    virtual json::value& assets();
+    virtual json::Value& assets();
 
     /// Returns the latest asset for this package.
     /// For local packages this is the currently installed version.
@@ -113,7 +113,7 @@ struct LocalPackage : public Package
     /// files and their location on the file system.
     struct Manifest
     {
-        Manifest(json::value& src);
+        Manifest(json::Value& src);
         virtual ~Manifest() noexcept;
 
         virtual bool empty() const;
@@ -121,14 +121,14 @@ struct LocalPackage : public Package
         // virtual void addDir(const std::string& path);
         virtual void addFile(const std::string& path);
 
-        json::value& root;
+        json::Value& root;
 
     private:
         // Manifest& operator = (const Manifest&) {}
     };
 
     LocalPackage();
-    LocalPackage(const json::value& src);
+    LocalPackage(const json::Value& src);
 
     /// Create the local package from the remote package
     /// reference with the following manipulations.
@@ -209,7 +209,7 @@ struct LocalPackage : public Package
     virtual std::string getInstalledFilePath(const std::string& fileName,
                                              bool whiny = false);
 
-    virtual json::value& errors();
+    virtual json::Value& errors();
     virtual void addError(const std::string& message);
     virtual std::string lastError() const;
     virtual void clearErrors();

@@ -29,8 +29,8 @@ Package::Package()
 }
 
 
-Package::Package(const json::value& src)
-    : json::value(src)
+Package::Package(const json::Value& src)
+    : json::Value(src)
 {
 }
 
@@ -87,7 +87,7 @@ void Package::print(std::ostream& ost) const
 //
 
 
-Package::Asset::Asset(json::value& src)
+Package::Asset::Asset(json::Value& src)
     : root(src)
 {
 }
@@ -169,7 +169,7 @@ RemotePackage::RemotePackage()
 }
 
 
-RemotePackage::RemotePackage(const json::value& src)
+RemotePackage::RemotePackage(const json::Value& src)
     : Package(src)
 {
 }
@@ -180,7 +180,7 @@ RemotePackage::~RemotePackage()
 }
 
 
-json::value& RemotePackage::assets()
+json::Value& RemotePackage::assets()
 {
     return (*this)["assets"];
 }
@@ -188,7 +188,7 @@ json::value& RemotePackage::assets()
 
 Package::Asset RemotePackage::latestAsset()
 {
-    json::value& assets = this->assets();
+    json::Value& assets = this->assets();
     if (assets.empty())
         throw std::runtime_error("Package has no assets");
 
@@ -210,7 +210,7 @@ Package::Asset RemotePackage::latestAsset()
 
 Package::Asset RemotePackage::assetVersion(const std::string& version)
 {
-    json::value& assets = this->assets();
+    json::Value& assets = this->assets();
     if (assets.empty())
         throw std::runtime_error("Package has no assets");
 
@@ -231,7 +231,7 @@ Package::Asset RemotePackage::assetVersion(const std::string& version)
 
 Package::Asset RemotePackage::latestSDKAsset(const std::string& version)
 {
-    json::value& assets = this->assets();
+    json::Value& assets = this->assets();
     if (assets.empty())
         throw std::runtime_error("Package has no assets");
 
@@ -264,7 +264,7 @@ LocalPackage::LocalPackage()
 }
 
 
-LocalPackage::LocalPackage(const json::value& src)
+LocalPackage::LocalPackage(const json::Value& src)
     : Package(src)
 {
 }
@@ -407,8 +407,8 @@ bool LocalPackage::verifyInstallManifest(bool allowEmpty)
 
     // Check file system for each manifest file
     LocalPackage::Manifest manifest = this->manifest();
-    for (auto it = manifest.root.begin(); it != manifest.root.end(); it++) {
-        std::string path = this->getInstalledFilePath((*it).get<std::string>(), false);
+    for (const auto& entry : manifest.root) {
+        std::string path = this->getInstalledFilePath(entry.get<std::string>(), false);
         SDebug << name() << ": Checking exists: " << path << std::endl;
 
         if (!fs::exists(fs::normalize(path))) {
@@ -441,7 +441,7 @@ void LocalPackage::setInstallDir(const std::string& dir)
 }
 
 
-json::value& LocalPackage::errors()
+json::Value& LocalPackage::errors()
 {
     return (*this)["errors"];
 }
@@ -455,7 +455,7 @@ void LocalPackage::addError(const std::string& message)
 
 std::string LocalPackage::lastError() const
 {
-    json::value errors = (*this)["errors"];
+    json::Value errors = (*this)["errors"];
     return errors.empty() ? "" : errors[errors.size() - 1].get<std::string>();
 }
 
@@ -477,7 +477,7 @@ bool LocalPackage::valid() const
 //
 
 
-LocalPackage::Manifest::Manifest(json::value& src)
+LocalPackage::Manifest::Manifest(json::Value& src)
     : root(src)
 {
 }

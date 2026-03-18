@@ -25,6 +25,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
+#include <string_view>
 
 
 namespace scy {
@@ -33,16 +34,16 @@ namespace pacm {
 
 /// Validates that a string is safe to use as a path component.
 /// Rejects path traversal sequences (.., /), null bytes, and empty strings.
-inline void validatePathComponent(const std::string& name, const std::string& context)
+inline void validatePathComponent(std::string_view name, std::string_view context)
 {
     if (name.empty())
-        throw std::invalid_argument(context + ": path component must not be empty");
-    if (name.find("..") != std::string::npos)
-        throw std::invalid_argument(context + ": path traversal detected in '" + name + "'");
-    if (name.find('/') != std::string::npos || name.find('\\') != std::string::npos)
-        throw std::invalid_argument(context + ": directory separator in '" + name + "'");
-    if (name.find('\0') != std::string::npos)
-        throw std::invalid_argument(context + ": null byte in path component");
+        throw std::invalid_argument(std::string(context) + ": path component must not be empty");
+    if (name.find("..") != std::string_view::npos)
+        throw std::invalid_argument(std::string(context) + ": path traversal detected in '" + std::string(name) + "'");
+    if (name.find('/') != std::string_view::npos || name.find('\\') != std::string_view::npos)
+        throw std::invalid_argument(std::string(context) + ": directory separator in '" + std::string(name) + "'");
+    if (name.find('\0') != std::string_view::npos)
+        throw std::invalid_argument(std::string(context) + ": null byte in path component");
 }
 
 
@@ -257,21 +258,21 @@ public:
     bool clearPackageCache(LocalPackage& package);
 
     /// Clears a file from the local cache.
-    bool clearCacheFile(const std::string& fileName, bool whiny = false);
+    bool clearCacheFile(std::string_view fileName, bool whiny = false);
 
     /// Checks if a package archive exists in the local cache.
     bool hasCachedFile(Package::Asset& asset);
 
     /// Checks if the file type is a supported package archive.
-    bool isSupportedFileType(const std::string& fileName);
+    bool isSupportedFileType(std::string_view fileName);
 
     /// Returns the full path of the cached file if it exists,
     /// or an empty path if the file doesn't exist.
-    std::string getCacheFilePath(const std::string& fileName);
+    std::string getCacheFilePath(std::string_view fileName);
 
     /// Returns the package data directory for the
     /// given package ID.
-    std::string getPackageDataDir(const std::string& id);
+    std::string getPackageDataDir(std::string_view id);
 
     //
     /// Accessors

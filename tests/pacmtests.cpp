@@ -68,7 +68,7 @@ int main(int argc, char** argv)
     // Package JSON Round-Trip
     //
     describe("package json round-trip", []() {
-        json::value j = json::value::parse(REMOTE_PACKAGE_JSON);
+        json::Value j = json::Value::parse(REMOTE_PACKAGE_JSON);
         pacm::RemotePackage pkg(j);
 
         expect(pkg.id() == "test-plugin");
@@ -79,7 +79,7 @@ int main(int argc, char** argv)
         expect(pkg.valid());
 
         // Serialize back and verify key fields survive the round-trip
-        json::value serialized = static_cast<json::value>(pkg);
+        json::Value serialized = static_cast<json::Value>(pkg);
         expect(serialized["id"].get<std::string>() == "test-plugin");
         expect(serialized["name"].get<std::string>() == "Test Plugin");
         expect(serialized["type"].get<std::string>() == "Plugin");
@@ -92,7 +92,7 @@ int main(int argc, char** argv)
     // Asset Fields
     //
     describe("asset fields", []() {
-        json::value j = json::value::parse(REMOTE_PACKAGE_JSON);
+        json::Value j = json::Value::parse(REMOTE_PACKAGE_JSON);
         pacm::RemotePackage pkg(j);
 
         pacm::Package::Asset asset = pkg.assetVersion("1.0.0");
@@ -109,7 +109,7 @@ int main(int argc, char** argv)
     // RemotePackage Version Selection
     //
     describe("remote package version selection", []() {
-        json::value j = json::value::parse(REMOTE_PACKAGE_JSON);
+        json::Value j = json::Value::parse(REMOTE_PACKAGE_JSON);
         pacm::RemotePackage pkg(j);
 
         // latestAsset should return the highest version (2.0.0)
@@ -157,7 +157,7 @@ int main(int argc, char** argv)
     // LocalPackage from RemotePackage
     //
     describe("local package from remote package", []() {
-        json::value j = json::value::parse(REMOTE_PACKAGE_JSON);
+        json::Value j = json::Value::parse(REMOTE_PACKAGE_JSON);
         pacm::RemotePackage remote(j);
         pacm::LocalPackage local(remote);
 
@@ -175,7 +175,7 @@ int main(int argc, char** argv)
     // LocalPackage State Management
     //
     describe("local package state management", []() {
-        json::value j = json::value::parse(REMOTE_PACKAGE_JSON);
+        json::Value j = json::Value::parse(REMOTE_PACKAGE_JSON);
         pacm::RemotePackage remote(j);
         pacm::LocalPackage local(remote);
 
@@ -210,7 +210,7 @@ int main(int argc, char** argv)
     // LocalPackage Version Management
     //
     describe("local package version management", []() {
-        json::value j = json::value::parse(REMOTE_PACKAGE_JSON);
+        json::Value j = json::Value::parse(REMOTE_PACKAGE_JSON);
         pacm::RemotePackage remote(j);
         pacm::LocalPackage local(remote);
 
@@ -245,7 +245,7 @@ int main(int argc, char** argv)
     // Manifest Operations
     //
     describe("manifest operations", []() {
-        json::value j = json::value::parse(REMOTE_PACKAGE_JSON);
+        json::Value j = json::Value::parse(REMOTE_PACKAGE_JSON);
         pacm::RemotePackage remote(j);
         pacm::LocalPackage local(remote);
 
@@ -270,7 +270,7 @@ int main(int argc, char** argv)
     // Error Handling
     //
     describe("error handling", []() {
-        json::value j = json::value::parse(REMOTE_PACKAGE_JSON);
+        json::Value j = json::Value::parse(REMOTE_PACKAGE_JSON);
         pacm::RemotePackage remote(j);
         pacm::LocalPackage local(remote);
 

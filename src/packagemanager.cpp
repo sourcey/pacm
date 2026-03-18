@@ -129,11 +129,11 @@ void PackageManager::queryRemotePackages()
 void PackageManager::parseRemotePackages(const std::string& data)
 {
     try {
-        json::value root = json::value::parse(data.begin(), data.end());
+        json::Value root = json::Value::parse(data.begin(), data.end());
         _remotePackages.clear();
 
-        for (auto it = root.begin(); it != root.end(); it++) {
-            auto package = std::make_unique<RemotePackage>(*it);
+        for (const auto& elem : root) {
+            auto package = std::make_unique<RemotePackage>(elem);
             if (!package->valid()) {
                 SError << "Invalid package: " << package->id() << endl;
                 continue;
@@ -175,7 +175,7 @@ void PackageManager::loadLocalPackages(const std::string& dir)
         std::string filename = fs::filename(path);
         if (filename.find(".json") != std::string::npos) {
             try {
-                json::value root;
+                json::Value root;
                 json::loadFile(path, root);
 
                 SDebug << "Loading package manifest: " << path << endl;
@@ -372,8 +372,8 @@ bool PackageManager::installPackages(const StringVec& ids,
 {
     bool res = false;
     try {
-        for (auto it = ids.begin(); it != ids.end(); ++it) {
-            auto task = installPackage(*it, options); //, whiny
+        for (const auto& id : ids) {
+            auto task = installPackage(id, options); //, whiny
             if (task) {
                 if (monitor)
                     monitor->addTask(task); // manual start
@@ -419,9 +419,9 @@ bool PackageManager::updatePackages(const StringVec& ids,
     // except we make sure local package exists before continuing.
     StringVec toUpdate(ids);
     {
-        for (auto it = ids.begin(); it != ids.end(); ++it) {
-            if (!localPackages().exists(*it)) {
-                std::string error("Cannot update " + *it +
+        for (const auto& id : ids) {
+            if (!localPackages().exists(id)) {
+                std::string error("Cannot update " + id +
                                   " because it's not installed.");
                 SError << error << endl;
                 if (whiny)
@@ -429,7 +429,7 @@ bool PackageManager::updatePackages(const StringVec& ids,
                 // else
                 //    return nullptr;
             } else
-                toUpdate.push_back(*it);
+                toUpdate.push_back(id);
         }
     }
 
@@ -461,9 +461,8 @@ bool PackageManager::uninstallPackage(const std::string& id, bool whiny)
             // uninstall a success.
             LocalPackage::Manifest manifest = package->manifest();
             if (!manifest.empty()) {
-                for (auto it = manifest.root.begin(); it != manifest.root.end();
-                     it++) {
-                    std::string path(package->getInstalledFilePath((*it).get<std::string>()));
+                for (const auto& entry : manifest.root) {
+                    std::string path(package->getInstalledFilePath(entry.get<std::string>()));
                     SDebug << "Delete file: " << path << endl;
                     try {
                         fs::unlink(path);
@@ -513,8 +512,8 @@ bool PackageManager::uninstallPackages(const StringVec& ids, bool whiny)
 {
     SDebug << "Uninstall packages: " << ids.size() << endl;
     bool res = true;
-    for (auto it = ids.begin(); it != ids.end(); ++it) {
-        if (!uninstallPackage(*it, whiny))
+    for (const auto& id : ids) {
+        if (!uninstallPackage(id, whiny))
             res = false;
     }
     return res;
@@ -625,9 +624,9 @@ void PackageManager::onPackageInstallComplete(InstallTask& task)
 InstallTask::Ptr PackageManager::getInstallTask(const std::string& id) const
 {
     std::lock_guard<std::mutex> guard(_mutex);
-    for (auto it = _tasks.begin(); it != _tasks.end(); it++) {
-        if ((*it)->remote()->id() == id)
-            return *it;
+    for (const auto& task : _tasks) {
+        if (task->remote()->id() == id)
+            return task;
     }
     return nullptr;
 }
@@ -759,7 +758,7 @@ void PackageManager::clearCache()
 bool PackageManager::clearPackageCache(LocalPackage& package)
 {
     bool res = true;
-    json::value& assets = package["assets"];
+    json::Value& assets = package["assets"];
     for (unsigned i = 0; i < assets.size(); i++) {
         Package::Asset asset(assets[i]);
         if (!clearCacheFile(asset.fileName(), false))
@@ -769,7 +768,7 @@ bool PackageManager::clearPackageCache(LocalPackage& package)
 }
 
 
-bool PackageManager::clearCacheFile(const std::string& fileName, bool whiny)
+bool PackageManager::clearCacheFile(std::string_view fileName, bool whiny)
 {
     try {
         std::string path = fs::makePath(options().tempDir, fileName);
@@ -803,21 +802,21 @@ bool PackageManager::hasCachedFile(Package::Asset& asset)
 }
 
 
-bool PackageManager::isSupportedFileType(const std::string& fileName)
+bool PackageManager::isSupportedFileType(std::string_view fileName)
 {
-    return fileName.find(".zip") != std::string::npos ||
-           fileName.find(".tar.gz") != std::string::npos;
+    return fileName.find(".zip") != std::string_view::npos ||
+           fileName.find(".tar.gz") != std::string_view::npos;
 }
 
 
-std::string PackageManager::getCacheFilePath(const std::string& fileName)
+std::string PackageManager::getCacheFilePath(std::string_view fileName)
 {
     validatePathComponent(fileName, "getCacheFilePath");
     return fs::makePath(options().tempDir, fileName);
 }
 
 
-std::string PackageManager::getPackageDataDir(const std::string& id)
+std::string PackageManager::getPackageDataDir(std::string_view id)
 {
     validatePathComponent(id, "getPackageDataDir");
     std::string dir = fs::makePath(options().dataDir, id);
