@@ -795,7 +795,7 @@ bool PackageManager::hasCachedFile(Package::Asset& asset)
     int expectedSize = asset.fileSize();
     if (expectedSize > 0) {
         auto actualSize = fs::filesize(path);
-        if (static_cast<uintmax_t>(expectedSize) != actualSize)
+        if (static_cast<std::int64_t>(expectedSize) != actualSize)
             return false;
     }
 

@@ -277,7 +277,7 @@ void InstallTask::doExtract()
         if (entryName.find("..") != std::string::npos)
             throw std::runtime_error("Path traversal detected in archive entry: " + entryName);
 
-        zip.extractCurrentFile(tempDir, true);
+        (void)zip.extractCurrentFile(tempDir, true);
 
         // Add the extracted file to the package install manifest
         // Note: Manifest stores relative paths

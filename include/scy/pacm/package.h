@@ -29,6 +29,7 @@ struct Package : public json::value
     struct Asset
     {
         Asset(json::value& src);
+        Asset(const Asset&) = default;
         virtual ~Asset() noexcept;
 
         virtual std::string fileName() const;
