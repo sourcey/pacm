@@ -1,14 +1,14 @@
-#include "scy/application.h"
-#include "scy/filesystem.h"
-#include "scy/net/sslmanager.h"
-#include "scy/pacm/packagemanager.h"
-#include "scy/util.h"
+#include "icy/application.h"
+#include "icy/filesystem.h"
+#include "icy/net/sslmanager.h"
+#include "icy/pacm/packagemanager.h"
+#include "icy/util.h"
 
 
 using std::cerr;
 using std::cout;
 using std::endl;
-using namespace scy;
+using namespace icy;
 
 
 //
@@ -25,7 +25,7 @@ using namespace scy;
 //
 
 
-class PacmApplication : public scy::Application
+class PacmApplication : public icy::Application
 {
 public:
     pacm::PackageManager manager;
@@ -54,8 +54,8 @@ public:
     {
         cout
             << "\nPacm v0.2.0"
-               "\n(c) Sourcey"
-               "\nhttps://sourcey.com/pacm"
+               "\n(c) Icey"
+               "\nhttps://icey.com/pacm"
                "\n"
                "\nGeneral commands:"
                "\n  -help           Print help"
@@ -114,7 +114,7 @@ public:
                 options.print = true;
             } else if (key == "logfile") {
                 auto log = dynamic_cast<FileChannel*>(
-                    scy::Logger::instance().get("Pacm"));
+                    icy::Logger::instance().get("Pacm"));
                 log->setPath(value);
             } else {
                 cerr << "Unrecognized command: " << key << "=" << value << endl;
@@ -134,7 +134,7 @@ public:
             // Initialize Pacman and query remote packages from the server
             manager.initialize();
             manager.queryRemotePackages();
-            scy::Application::run();
+            icy::Application::run();
             if (!manager.initialized()) {
                 cerr << "Package manager failed to initialize" << endl;
                 return;
@@ -145,7 +145,7 @@ public:
                 cout << "# Uninstall packages: " << options.install.size()
                      << endl;
                 manager.uninstallPackages(options.uninstall);
-                scy::Application::run();
+                icy::Application::run();
             }
 
             // Install packages if requested
@@ -153,14 +153,14 @@ public:
                 cout << "# Install packages: " << options.install.size()
                      << endl;
                 manager.installPackages(options.install);
-                scy::Application::run();
+                icy::Application::run();
             }
 
             // Update all packages if requested
             if (options.update) {
                 cout << "# Update all packages" << endl;
                 manager.updateAllPackages();
-                scy::Application::run();
+                icy::Application::run();
             }
 
             // Print packages to stdout

@@ -1,7 +1,7 @@
 ///
 //
-// LibSourcey
-// Copyright (c) 2005, Sourcey <https://sourcey.com>
+// Icey
+// Copyright (c) 2005, Icey <https://icey.com>
 //
 // SPDX-License-Identifier: LGPL-2.1+
 //
@@ -12,7 +12,7 @@
 #pragma once
 
 
-namespace scy {
+namespace icy {
 namespace pacm {
 
 
@@ -34,7 +34,7 @@ namespace pacm {
 #endif
 
 // Shared library exports
-#if defined(SCY_WIN) && defined(SCY_SHARED_LIBRARY)
+#if defined(ICY_WIN) && defined(ICY_SHARED_LIBRARY)
 #if defined(Pacm_EXPORTS)
 #define Pacm_API __declspec(dllexport)
 #else
@@ -46,7 +46,7 @@ namespace pacm {
 
 
 } // namespace pacm
-} // namespace scy
+} // namespace icy
 
 
 /// @\}

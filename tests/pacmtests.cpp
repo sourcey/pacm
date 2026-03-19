@@ -1,7 +1,7 @@
 ///
 //
-// LibSourcey
-// Copyright (c) 2005, Sourcey <https://sourcey.com>
+// Icey
+// Copyright (c) 2005, Icey <https://icey.com>
 //
 // SPDX-License-Identifier: LGPL-2.1+
 //
@@ -9,16 +9,16 @@
 /// @{
 
 
-#include "scy/pacm/package.h"
-#include "scy/pacm/installtask.h"
-#include "scy/json/json.h"
-#include "scy/logger.h"
-#include "scy/test.h"
+#include "icy/pacm/package.h"
+#include "icy/pacm/installtask.h"
+#include "icy/json/json.h"
+#include "icy/logger.h"
+#include "icy/test.h"
 
 
 using namespace std;
-using namespace scy;
-using namespace scy::test;
+using namespace icy;
+using namespace icy::test;
 
 
 static const char* REMOTE_PACKAGE_JSON = R"({

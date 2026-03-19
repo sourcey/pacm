@@ -1,7 +1,7 @@
 ///
 //
-// LibSourcey
-// Copyright (c) 2005, Sourcey <https://sourcey.com>
+// Icey
+// Copyright (c) 2005, Icey <https://icey.com>
 //
 // SPDX-License-Identifier: LGPL-2.1+
 //
@@ -12,23 +12,23 @@
 #pragma once
 
 
-#include "scy/collection.h"
-#include "scy/json/json.h"
-#include "scy/pacm/config.h"
-#include "scy/pacm/installmonitor.h"
-#include "scy/pacm/installtask.h"
-#include "scy/pacm/package.h"
-#include "scy/platform.h"
-#include "scy/stateful.h"
-#include "scy/filesystem.h"
-#include "scy/task.h"
+#include "icy/collection.h"
+#include "icy/json/json.h"
+#include "icy/pacm/config.h"
+#include "icy/pacm/installmonitor.h"
+#include "icy/pacm/installtask.h"
+#include "icy/pacm/package.h"
+#include "icy/platform.h"
+#include "icy/stateful.h"
+#include "icy/filesystem.h"
+#include "icy/task.h"
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include <string_view>
 
 
-namespace scy {
+namespace icy {
 namespace pacm {
 
 
@@ -315,7 +315,7 @@ protected:
 
 
 } // namespace pacm
-} // namespace scy
+} // namespace icy
 
 
 /// @\}

@@ -1,7 +1,7 @@
 ///
 //
-// LibSourcey
-// Copyright (c) 2005, Sourcey <https://sourcey.com>
+// Icey
+// Copyright (c) 2005, Icey <https://icey.com>
 //
 // SPDX-License-Identifier: LGPL-2.1+
 //
@@ -9,14 +9,14 @@
 /// @{
 
 
-#include "scy/pacm/packagemanager.h"
-#include "scy/filesystem.h"
-#include "scy/http/authenticator.h"
-#include "scy/http/client.h"
-#include "scy/json/json.h"
-#include "scy/packetio.h"
-#include "scy/pacm/package.h"
-#include "scy/util.h"
+#include "icy/pacm/packagemanager.h"
+#include "icy/filesystem.h"
+#include "icy/http/authenticator.h"
+#include "icy/http/client.h"
+#include "icy/json/json.h"
+#include "icy/packetio.h"
+#include "icy/pacm/package.h"
+#include "icy/util.h"
 
 #include <memory>
 
@@ -24,7 +24,7 @@
 using namespace std;
 
 
-namespace scy {
+namespace icy {
 namespace pacm {
 
 
@@ -847,7 +847,7 @@ LocalPackageStore& PackageManager::localPackages()
 
 
 } // namespace pacm
-} // namespace scy
+} // namespace icy
 
 
 /// @\}

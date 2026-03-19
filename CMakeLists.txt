@@ -1,5 +1,5 @@
 if(HAVE_OPENSSL)
-  scy_add_module(pacm
+  icy_add_module(pacm
     DEPENDS base net json http archo crypto
     PACKAGES OpenSSL::SSL OpenSSL::Crypto
   )

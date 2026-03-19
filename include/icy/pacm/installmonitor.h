@@ -1,7 +1,7 @@
 ///
 //
-// LibSourcey
-// Copyright (c) 2005, Sourcey <https://sourcey.com>
+// Icey
+// Copyright (c) 2005, Icey <https://icey.com>
 //
 // SPDX-License-Identifier: LGPL-2.1+
 //
@@ -12,10 +12,10 @@
 #pragma once
 
 
-#include "scy/pacm/installtask.h"
+#include "icy/pacm/installtask.h"
 
 
-namespace scy {
+namespace icy {
 namespace pacm {
 
 
@@ -98,7 +98,7 @@ inline std::string getInstallTaskNamesString(LocalPackageVec& packages)
 
 
 } // namespace pacm
-} // namespace scy
+} // namespace icy
 
 
 /// @\}

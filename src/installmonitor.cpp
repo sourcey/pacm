@@ -1,7 +1,7 @@
 ///
 //
-// LibSourcey
-// Copyright (c) 2005, Sourcey <https://sourcey.com>
+// Icey
+// Copyright (c) 2005, Icey <https://icey.com>
 //
 // SPDX-License-Identifier: LGPL-2.1+
 //
@@ -9,15 +9,15 @@
 /// @{
 
 
-#include "scy/pacm/installmonitor.h"
-#include "scy/logger.h"
-#include "scy/pacm/packagemanager.h"
+#include "icy/pacm/installmonitor.h"
+#include "icy/logger.h"
+#include "icy/pacm/packagemanager.h"
 
 
 using namespace std;
 
 
-namespace scy {
+namespace icy {
 namespace pacm {
 
 
@@ -142,7 +142,7 @@ bool InstallMonitor::isComplete() const
 
 
 } // namespace pacm
-} // namespace scy
+} // namespace icy
 
 
 /// @\}

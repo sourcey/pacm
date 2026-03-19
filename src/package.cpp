@@ -1,7 +1,7 @@
 ///
 //
-// LibSourcey
-// Copyright (c) 2005, Sourcey <https://sourcey.com>
+// Icey
+// Copyright (c) 2005, Icey <https://icey.com>
 //
 // SPDX-License-Identifier: LGPL-2.1+
 //
@@ -9,13 +9,13 @@
 /// @{
 
 
-#include "scy/pacm/package.h"
-#include "scy/filesystem.h"
-#include "scy/logger.h"
-#include "scy/util.h"
+#include "icy/pacm/package.h"
+#include "icy/filesystem.h"
+#include "icy/logger.h"
+#include "icy/util.h"
 
 
-namespace scy {
+namespace icy {
 namespace pacm {
 
 
@@ -550,7 +550,7 @@ bool PackagePair::valid() const
 
 
 } // namespace pacm
-} // namespace scy
+} // namespace icy
 
 
 /// @\}

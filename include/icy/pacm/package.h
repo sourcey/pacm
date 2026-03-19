@@ -1,7 +1,7 @@
 ///
 //
-// LibSourcey
-// Copyright (c) 2005, Sourcey <https://sourcey.com>
+// Icey
+// Copyright (c) 2005, Icey <https://icey.com>
 //
 // SPDX-License-Identifier: LGPL-2.1+
 //
@@ -12,10 +12,10 @@
 #pragma once
 
 
-#include "scy/json/json.h"
+#include "icy/json/json.h"
 
 
-namespace scy {
+namespace icy {
 namespace pacm {
 
 
@@ -248,7 +248,7 @@ using PackagePairVec = std::vector<PackagePair>;
 
 
 } // namespace pacm
-} // namespace scy
+} // namespace icy
 
 
 /// @\}

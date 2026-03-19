@@ -1,7 +1,7 @@
 ///
 //
-// LibSourcey
-// Copyright (c) 2005, Sourcey <https://sourcey.com>
+// Icey
+// Copyright (c) 2005, Icey <https://icey.com>
 //
 // SPDX-License-Identifier: LGPL-2.1+
 //
@@ -9,24 +9,24 @@
 /// @{
 
 
-#include "scy/pacm/installtask.h"
-#include "scy/archo/zipfile.h"
-#include "scy/crypto/hash.h"
-#include "scy/http/authenticator.h"
-#include "scy/http/client.h"
-#include "scy/logger.h"
-#include "scy/packetio.h"
-#include "scy/pacm/package.h"
-#include "scy/pacm/packagemanager.h"
+#include "icy/pacm/installtask.h"
+#include "icy/archo/zipfile.h"
+#include "icy/crypto/hash.h"
+#include "icy/http/authenticator.h"
+#include "icy/http/client.h"
+#include "icy/logger.h"
+#include "icy/packetio.h"
+#include "icy/pacm/package.h"
+#include "icy/pacm/packagemanager.h"
 
-#include "scy/filesystem.h"
+#include "icy/filesystem.h"
 
 #include <algorithm>
 
 using namespace std;
 
 
-namespace scy {
+namespace icy {
 namespace pacm {
 
 
@@ -456,7 +456,7 @@ uv::Loop* InstallTask::loop() const
 
 
 } // namespace pacm
-} // namespace scy
+} // namespace icy
 
 
 /// @\}

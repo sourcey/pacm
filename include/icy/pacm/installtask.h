@@ -1,7 +1,7 @@
 ///
 //
-// LibSourcey
-// Copyright (c) 2005, Sourcey <https://sourcey.com>
+// Icey
+// Copyright (c) 2005, Icey <https://icey.com>
 //
 // SPDX-License-Identifier: LGPL-2.1+
 //
@@ -12,15 +12,15 @@
 #pragma once
 
 
-#include "scy/http/client.h"
-#include "scy/idler.h"
-#include "scy/logger.h"
-#include "scy/pacm/config.h"
-#include "scy/pacm/package.h"
-#include "scy/stateful.h"
+#include "icy/http/client.h"
+#include "icy/idler.h"
+#include "icy/logger.h"
+#include "icy/pacm/config.h"
+#include "icy/pacm/package.h"
+#include "icy/stateful.h"
 
 
-namespace scy {
+namespace icy {
 namespace pacm {
 
 
@@ -153,7 +153,7 @@ protected:
     mutable std::mutex _mutex;
 
     Idler _runner;
-    scy::Error _error;
+    icy::Error _error;
     PackageManager& _manager;
     LocalPackage* _local;
     RemotePackage* _remote;
@@ -173,7 +173,7 @@ using InstallTaskPtrVec = std::vector<InstallTask::Ptr>;
 
 
 } // namespace pacm
-} // namespace scy
+} // namespace icy
 
 
 /// @\}
