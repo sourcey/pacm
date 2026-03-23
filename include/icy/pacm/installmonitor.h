@@ -22,6 +22,7 @@ namespace pacm {
 using LocalPackageVec = std::vector<LocalPackage*>;
 
 
+/// Progress monitor for package installation operations
 class Pacm_API InstallMonitor
 {
 public:
@@ -53,18 +54,18 @@ public:
     virtual LocalPackageVec packages() const;
 
     /// Proxies state change events from managed packages
-    Signal<void(InstallTask&, const InstallationState&,
-                const InstallationState&)>
+    ThreadSignal<void(InstallTask&, const InstallationState&,
+                      const InstallationState&)>
         InstallStateChange;
 
     /// Signals when a managed install task completes.
-    Signal<void(LocalPackage&)> InstallComplete;
+    ThreadSignal<void(LocalPackage&)> InstallComplete;
 
     /// Signals on overall progress update [0-100].
-    Signal<void(int&)> Progress;
+    ThreadSignal<void(int&)> Progress;
 
     /// Signals on all tasks complete.
-    Signal<void(LocalPackageVec&)> Complete;
+    ThreadSignal<void(LocalPackageVec&)> Complete;
 
 protected:
     virtual void onInstallStateChange(
@@ -83,7 +84,9 @@ protected:
 };
 
 
-/// Returns a comma delimited package name string.
+/// Returns a comma-delimited string of display names from @p packages.
+/// @param packages Vector of LocalPackage pointers to format.
+/// @return Comma-separated name string, e.g. "PluginA, PluginB".
 inline std::string getInstallTaskNamesString(LocalPackageVec& packages)
 {
     std::string names;
