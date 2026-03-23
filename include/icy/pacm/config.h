@@ -5,7 +5,9 @@
 //
 // SPDX-License-Identifier: LGPL-2.1+
 //
-/// @addtogroup pacm
+/// @defgroup pacm Pacm module
+///
+/// Package manager for distributing and installing plugins.
 /// @{
 
 

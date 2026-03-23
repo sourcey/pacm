@@ -28,39 +28,76 @@ struct Package : public json::Value
     /// the parent package.
     struct Asset
     {
+        /// @param src JSON object node that backs this asset.
         Asset(json::Value& src);
         Asset(const Asset&) = default;
         virtual ~Asset() noexcept;
 
+        /// Returns the archive file name (e.g. "my-plugin-1.0.0.zip").
         virtual std::string fileName() const;
+
+        /// Returns the package version string (e.g. "1.0.0").
         virtual std::string version() const;
+
+        /// Returns the SDK version this asset was built against (e.g. "2.0.0").
         virtual std::string sdkVersion() const;
+
+        /// Returns the asset checksum string, or empty if none is set.
         virtual std::string checksum() const;
+
+        /// Returns the download URL from the mirror list at @p index.
+        /// @param index Zero-based index into the mirrors array.
         virtual std::string url(int index = 0) const;
+
+        /// Returns the uncompressed file size in bytes, or 0 if not set.
         virtual int fileSize() const;
 
+        /// Returns true if the asset has the minimum required fields
+        /// (file-name, version, mirrors).
         virtual bool valid() const;
 
+        /// Writes the raw JSON of this asset to @p ost.
+        /// @param ost Output stream.
         virtual void print(std::ostream& ost) const;
 
+        /// Copies the backing JSON node from @p r.
+        /// @param r Source asset to copy from.
         virtual Asset& operator=(const Asset& r);
+
+        /// Returns true if file name, version and checksum all match @p r.
         virtual bool operator==(const Asset& r) const;
 
         json::Value& root;
     };
 
+    /// Constructs an empty package.
     Package();
+
+    /// Constructs a package from an existing JSON value.
+    /// @param src JSON object containing package fields.
     Package(const json::Value& src);
     virtual ~Package() noexcept;
 
+    /// Returns the package unique identifier.
     virtual std::string id() const;
+
+    /// Returns the package display name.
     virtual std::string name() const;
+
+    /// Returns the package type (e.g. "plugin", "asset").
     virtual std::string type() const;
+
+    /// Returns the package author string.
     virtual std::string author() const;
+
+    /// Returns the package description string.
     virtual std::string description() const;
 
+    /// Returns true if id, name and type are all non-empty.
     virtual bool valid() const;
 
+    /// Dumps the JSON representation of this package to @p ost.
+    /// @param ost Output stream.
     virtual void print(std::ostream& ost) const;
 };
 
@@ -74,10 +111,15 @@ struct Package : public json::Value
 /// may be downloaded and installed.
 struct RemotePackage : public Package
 {
+    /// Constructs an empty remote package.
     RemotePackage();
+
+    /// Constructs a remote package from an existing JSON value.
+    /// @param src JSON object containing remote package fields.
     RemotePackage(const json::Value& src);
     virtual ~RemotePackage() noexcept;
 
+    /// Returns a reference to the "assets" JSON array node.
     virtual json::Value& assets();
 
     /// Returns the latest asset for this package.
@@ -113,11 +155,15 @@ struct LocalPackage : public Package
     /// files and their location on the file system.
     struct Manifest
     {
+        /// @param src JSON array node that backs this manifest.
         Manifest(json::Value& src);
         virtual ~Manifest() noexcept;
 
+        /// Returns true if the manifest contains no file entries.
         virtual bool empty() const;
 
+        /// Appends @p path to the manifest file list.
+        /// @param path Relative path of an installed file.
         // virtual void addDir(const std::string& path);
         virtual void addFile(const std::string& path);
 
@@ -127,7 +173,11 @@ struct LocalPackage : public Package
         // Manifest& operator = (const Manifest&) {}
     };
 
+    /// Constructs an empty local package.
     LocalPackage();
+
+    /// Constructs a local package from an existing JSON value.
+    /// @param src JSON object containing local package fields.
     LocalPackage(const json::Value& src);
 
     /// Create the local package from the remote package
@@ -185,7 +235,10 @@ struct LocalPackage : public Package
     virtual std::string installDir() const;
 
 
+    /// Returns the pinned version string, or empty if no lock is set.
     virtual std::string versionLock() const;
+
+    /// Returns the pinned SDK version string, or empty if no lock is set.
     virtual std::string sdkLockedVersion() const;
 
     /// Returns the currently installed asset, if any.
@@ -197,6 +250,7 @@ struct LocalPackage : public Package
     /// False if package is in Failed state.
     virtual bool isInstalled() const;
 
+    /// Returns true if the package state is "Failed".
     virtual bool isFailed() const;
 
     /// Returns the installation manifest.
@@ -209,9 +263,17 @@ struct LocalPackage : public Package
     virtual std::string getInstalledFilePath(const std::string& fileName,
                                              bool whiny = false);
 
+    /// Returns a reference to the JSON array of accumulated error messages.
     virtual json::Value& errors();
+
+    /// Appends @p message to the errors array.
+    /// @param message Error description to record.
     virtual void addError(const std::string& message);
+
+    /// Returns the most recently added error message, or empty if none.
     virtual std::string lastError() const;
+
+    /// Clears all recorded error messages.
     virtual void clearErrors();
 
     virtual bool valid() const;
@@ -226,13 +288,23 @@ struct LocalPackage : public Package
 /// remote package.
 struct PackagePair
 {
+    /// @param local  Pointer to the locally installed package, or nullptr if not installed.
+    /// @param remote Pointer to the remote package record, or nullptr if not known.
     PackagePair(LocalPackage* local = nullptr, RemotePackage* remote = nullptr);
 
+    /// Returns true if at least one of local/remote is set and that pointer is itself valid().
     virtual bool valid() const;
 
+    /// Returns the package ID, preferring the local package if available.
     std::string id() const;
+
+    /// Returns the package display name, preferring the local package if available.
     std::string name() const;
+
+    /// Returns the package type, preferring the local package if available.
     std::string type() const;
+
+    /// Returns the package author, preferring the local package if available.
     std::string author() const;
 
     /// Returns true if there are no possible updates for

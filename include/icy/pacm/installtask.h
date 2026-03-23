@@ -27,6 +27,7 @@ namespace pacm {
 class Pacm_API PackageManager;
 
 
+/// State machine states for package installation
 struct InstallationState : public State
 {
     enum Type
@@ -40,6 +41,9 @@ struct InstallationState : public State
         Failed
     };
 
+    /// Converts a state ID to its string representation.
+    /// @param id One of the Type enum values.
+    /// @return Human-readable state name, or "undefined" for unknown values.
     std::string str(unsigned int id) const
     {
         switch (id) {
@@ -88,6 +92,12 @@ class Pacm_API InstallTask : public basic::Runnable
 public:
     using Ptr = std::shared_ptr<InstallTask>;
 
+    /// @param manager Owning PackageManager instance.
+    /// @param local   Local package record (must not be null).
+    /// @param remote  Remote package record to install from (may be null for local-only ops).
+    /// @param options Version and path overrides for this installation.
+    /// @param loop    libuv event loop to use for async HTTP downloads.
+    /// @throws std::runtime_error if the task configuration is invalid.
     InstallTask(PackageManager& manager, LocalPackage* local, RemotePackage* remote,
                 const InstallOptions& options = InstallOptions(),
                 uv::Loop* loop = uv::defaultLoop());
@@ -98,7 +108,11 @@ public:
     InstallTask(InstallTask&&) = delete;
     InstallTask& operator=(InstallTask&&) = delete;
 
+    /// Validates options, resolves the install directory, and launches the background runner.
+    /// @throws std::runtime_error if the requested version or SDK version asset is unavailable.
     virtual void start();
+
+    /// Transitions the task to the Cancelled state.
     virtual void cancel();
 
     /// Downloads the package archive from the server.
@@ -117,18 +131,40 @@ public:
     /// This will trigger destruction.
     virtual void setComplete();
 
+    /// Returns the remote asset selected by the current InstallOptions.
+    /// Respects version and sdkVersion overrides; falls back to latestAsset().
     virtual Package::Asset getRemoteAsset() const;
 
+    /// Returns a pointer to the local package record.
     virtual LocalPackage* local() const;
+
+    /// Returns a pointer to the remote package record.
     virtual RemotePackage* remote() const;
+
+    /// Returns a reference to the installation options for this task.
     virtual InstallOptions& options();
+
+    /// Returns the libuv event loop used for async operations.
     virtual uv::Loop* loop() const;
 
+    /// Returns true if the task is not in a Failed state and both local and remote
+    /// (if set) packages are valid.
     virtual bool valid() const;
+
+    /// Returns true if the task is in the Cancelled state.
     virtual bool cancelled() const;
+
+    /// Returns true if the task is in the Failed state.
     virtual bool failed() const;
+
+    /// Returns true if the task is in the Installed (success) state.
     virtual bool success() const;
+
+    /// Returns true if the task has reached a terminal state
+    /// (Installed, Cancelled, or Failed).
     virtual bool complete() const;
+
+    /// Returns the current progress value in the range [0, 100].
     virtual int progress() const;
 
     /// Signals on progress update [0-100].

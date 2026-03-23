@@ -33,7 +33,11 @@ namespace pacm {
 
 
 /// Validates that a string is safe to use as a path component.
-/// Rejects path traversal sequences (.., /), null bytes, and empty strings.
+/// Rejects path traversal sequences (..), directory separators (/ and \),
+/// null bytes, and empty strings.
+/// @param name    The path component to validate.
+/// @param context Caller description included in the exception message.
+/// @throws std::invalid_argument if @p name fails any validation check.
 inline void validatePathComponent(std::string_view name, std::string_view context)
 {
     if (name.empty())
@@ -47,10 +51,8 @@ inline void validatePathComponent(std::string_view name, std::string_view contex
 }
 
 
-using LocalPackageStore = LiveCollection<std::string, LocalPackage>;
-using LocalPackageMap = LocalPackageStore::Map;
-using RemotePackageStore = LiveCollection<std::string, RemotePackage>;
-using RemotePackageMap = RemotePackageStore::Map;
+using LocalPackageStore = KeyedStore<std::string, LocalPackage>;
+using RemotePackageStore = KeyedStore<std::string, RemotePackage>;
 
 
 /// The Package Manager provides an interface for managing,
@@ -91,6 +93,7 @@ public:
     };
 
 public:
+    /// @param options Configuration for directories, endpoints, and credentials.
     PackageManager(const Options& options = Options());
     virtual ~PackageManager() noexcept;
 
@@ -102,9 +105,14 @@ public:
     //
     /// Initialization Methods
 
+    /// Initializes the package manager: creates directories, loads local manifests,
+    /// and queries the remote package index.
     virtual void initialize();
+
+    /// Releases resources and cancels any in-progress tasks.
     virtual void uninitialize();
 
+    /// Returns true if initialize() has been called successfully.
     virtual bool initialized() const;
 
     /// Creates the package manager directory structure
@@ -124,6 +132,9 @@ public:
     /// in memory package manifests.
     virtual void loadLocalPackages(const std::string& dir);
 
+    /// Saves all local package manifests to the data directory.
+    /// @param whiny If true, re-throws on write error; otherwise returns false.
+    /// @return true on success.
     virtual bool saveLocalPackages(bool whiny = false);
 
     /// Saves the local package manifest to the file system.
@@ -277,8 +288,13 @@ public:
     //
     /// Accessors
 
+    /// Returns a reference to the current options.
     virtual Options& options();
+
+    /// Returns a reference to the in-memory remote package store.
     virtual RemotePackageStore& remotePackages();
+
+    /// Returns a reference to the in-memory local package store.
     virtual LocalPackageStore& localPackages();
 
     //

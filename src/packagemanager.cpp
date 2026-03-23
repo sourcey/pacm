@@ -139,7 +139,7 @@ void PackageManager::parseRemotePackages(const std::string& data)
                 continue;
             }
             auto id = package->id();
-            _remotePackages.add(id, std::move(package));
+            _remotePackages.tryAdd(id, std::move(package));
         }
     } catch (std::invalid_argument& exc) {
         SError << "Invalid server JSON response: " << exc.what() << endl;
@@ -186,7 +186,7 @@ void PackageManager::loadLocalPackages(const std::string& dir)
 
                 SDebug << "local package added: " << package->name() << endl;
                 auto id = package->id();
-                localPackages().add(id, std::move(package));
+                localPackages().tryAdd(id, std::move(package));
             } catch (std::exception& exc) {
                 SError << "Cannot load local package: " << exc.what() << endl;
             }
@@ -200,7 +200,7 @@ bool PackageManager::saveLocalPackages(bool whiny)
     STrace << "Saving local packages" << endl;
 
     bool res = true;
-    auto& toSave = localPackages().map();
+    auto& toSave = localPackages();
     for (auto& [key, pkg] : toSave) {
         if (!saveLocalPackage(static_cast<LocalPackage&>(*pkg), whiny))
             res = false;
@@ -397,7 +397,7 @@ InstallTask::Ptr PackageManager::updatePackage(const std::string& name,
     // An update action is essentially the same as an install action,
     // except we make sure local package exists before continuing.
     {
-        if (!localPackages().exists(name)) {
+        if (!localPackages().contains(name)) {
             std::string error("Update Failed: " + name + " is not installed.");
             SError << "" << error << endl;
             throw std::runtime_error(error);
@@ -420,7 +420,7 @@ bool PackageManager::updatePackages(const StringVec& ids,
     StringVec toUpdate(ids);
     {
         for (const auto& id : ids) {
-            if (!localPackages().exists(id)) {
+            if (!localPackages().contains(id)) {
                 std::string error("Cannot update " + id +
                                   " because it's not installed.");
                 SError << error << endl;
@@ -440,7 +440,7 @@ bool PackageManager::updatePackages(const StringVec& ids,
 bool PackageManager::updateAllPackages(bool whiny)
 {
     StringVec toUpdate;
-    for (const auto& [id, pkg] : localPackages().map()) {
+    for (const auto& [id, pkg] : localPackages()) {
         toUpdate.push_back(id);
     }
 
@@ -454,7 +454,9 @@ bool PackageManager::uninstallPackage(const std::string& id, bool whiny)
     SDebug << "Uninstalling: " << id << endl;
 
     try {
-        LocalPackage* package = localPackages().get(id, true);
+        auto* package = localPackages().get(id);
+        if (!package)
+            throw std::runtime_error("Package not found: " + id);
         try {
             // Delete package files from manifest
             // NOTE: If some files fail to delete we still consider the
@@ -495,7 +497,7 @@ bool PackageManager::uninstallPackage(const std::string& id, bool whiny)
         PackageUninstalled.emit(*package);
 
         // Free package reference from memory (unique_ptr handles deletion)
-        localPackages().free(package->id());
+        localPackages().erase(package->id());
     } catch (std::exception& exc) {
         SError << "Fatal uninstall error: " << exc.what() << endl;
         if (whiny)
@@ -544,7 +546,7 @@ bool PackageManager::hasUnfinalizedPackages()
     SDebug << "checking for unfinalized packages" << endl;
 
     bool res = false;
-    auto& packages = localPackages().map();
+    auto& packages = localPackages();
     for (auto& [key, pkg] : packages) {
         if (pkg->state() == "Installing" &&
             pkg->installState() == "Finalizing") {
@@ -562,7 +564,7 @@ bool PackageManager::finalizeInstallations(bool whiny)
     SDebug << "Finalizing installations" << endl;
 
     bool res = true;
-    auto& packages = localPackages().map();
+    auto& packages = localPackages();
     for (auto& [key, pkg] : packages) {
         try {
             if (pkg->state() == "Installing" &&
@@ -647,8 +649,8 @@ PackagePair PackageManager::getPackagePair(const std::string& id,
                                            bool whiny) const
 {
     std::lock_guard<std::mutex> guard(_mutex);
-    auto local = _localPackages.get(id, false);
-    auto remote = _remotePackages.get(id, false);
+    auto* local = _localPackages.get(id);
+    auto* remote = _remotePackages.get(id);
 
     if (whiny && local && !local->valid())
         throw std::runtime_error("The local package is invalid");
@@ -664,8 +666,8 @@ PackagePairVec PackageManager::getPackagePairs() const
 {
     PackagePairVec pairs;
     std::lock_guard<std::mutex> guard(_mutex);
-    auto& lpackages = _localPackages.map();
-    auto& rpackages = _remotePackages.map();
+    auto& lpackages = _localPackages;
+    auto& rpackages = _remotePackages;
     for (auto& [key, pkg] : lpackages) {
         pairs.push_back(PackagePair(pkg.get()));
     }
@@ -701,7 +703,7 @@ PackagePairVec PackageManager::getUpdatablePackagePairs() const
 PackagePair PackageManager::getOrCreatePackagePair(const std::string& id)
 {
     std::lock_guard<std::mutex> guard(_mutex);
-    auto remote = _remotePackages.get(id, false);
+    auto* remote = _remotePackages.get(id);
     if (!remote)
         throw std::runtime_error("The remote package does not exist.");
 
@@ -715,11 +717,11 @@ PackagePair PackageManager::getOrCreatePackagePair(const std::string& id)
         throw std::runtime_error("The remote package is invalid.");
 
     // Get or create the local package description.
-    auto local = _localPackages.get(id, false);
+    auto* local = _localPackages.get(id);
     if (!local) {
         auto pkg = std::make_unique<LocalPackage>(*remote);
         local = pkg.get();
-        _localPackages.add(id, std::move(pkg));
+        _localPackages.tryAdd(id, std::move(pkg));
     }
 
     if (!local->valid())
@@ -732,7 +734,9 @@ PackagePair PackageManager::getOrCreatePackagePair(const std::string& id)
 string PackageManager::installedPackageVersion(const std::string& id) const
 {
     std::lock_guard<std::mutex> guard(_mutex);
-    auto local = _localPackages.get(id, true);
+    auto* local = _localPackages.get(id);
+    if (!local)
+        throw std::runtime_error("Package not found: " + id);
 
     if (!local->valid())
         throw std::runtime_error("The local package is invalid.");
