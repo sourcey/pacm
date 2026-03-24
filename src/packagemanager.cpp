@@ -118,7 +118,7 @@ void PackageManager::queryRemotePackages()
             conn->close();
         };
 
-        conn->send();
+        conn->submit();
     } catch (std::exception& exc) {
         SError << "Package Query Error: " << exc.what() << endl;
         throw exc;
