@@ -79,7 +79,7 @@ int main(int argc, char** argv)
         expect(pkg.valid());
 
         // Serialize back and verify key fields survive the round-trip
-        json::Value serialized = static_cast<json::Value>(pkg);
+        json::Value serialized = pkg.toJson();
         expect(serialized["id"].get<std::string>() == "test-plugin");
         expect(serialized["name"].get<std::string>() == "Test Plugin");
         expect(serialized["type"].get<std::string>() == "Plugin");

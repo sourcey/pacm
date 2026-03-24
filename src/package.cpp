@@ -46,6 +46,12 @@ bool Package::valid() const
 }
 
 
+json::Value Package::toJson() const
+{
+    return json::Value(static_cast<const json::Value&>(*this));
+}
+
+
 std::string Package::id() const
 {
     return (*this)["id"].get<std::string>();
@@ -443,7 +449,12 @@ void LocalPackage::setInstallDir(const std::string& dir)
 
 json::Value& LocalPackage::errors()
 {
-    return (*this)["errors"];
+    json::Value& node = (*this)["errors"];
+    if (node.is_null())
+        node = json::Value::array();
+    else if (!node.is_array())
+        throw std::runtime_error("Package errors must be an array.");
+    return node;
 }
 
 
@@ -455,14 +466,23 @@ void LocalPackage::addError(const std::string& message)
 
 std::string LocalPackage::lastError() const
 {
-    json::Value errors = (*this)["errors"];
-    return errors.empty() ? "" : errors[errors.size() - 1].get<std::string>();
+    auto it = find("errors");
+    if (it == end())
+        return "";
+    if (!it->is_array())
+        throw std::runtime_error("Package errors must be an array.");
+    return it->empty() ? "" : it->back().get<std::string>();
 }
 
 
 void LocalPackage::clearErrors()
 {
-    errors().clear();
+    auto it = find("errors");
+    if (it == end())
+        return;
+    if (!it->is_array())
+        throw std::runtime_error("Package errors must be an array.");
+    it->clear();
 }
 
 

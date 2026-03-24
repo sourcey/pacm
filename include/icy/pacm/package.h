@@ -96,6 +96,9 @@ struct Package : public json::Value
     /// Returns true if id, name and type are all non-empty.
     virtual bool valid() const;
 
+    /// Returns a plain JSON copy of this package object.
+    [[nodiscard]] virtual json::Value toJson() const;
+
     /// Dumps the JSON representation of this package to @p ost.
     /// @param ost Output stream.
     virtual void print(std::ostream& ost) const;
