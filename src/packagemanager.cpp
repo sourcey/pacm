@@ -854,4 +854,4 @@ LocalPackageStore& PackageManager::localPackages()
 } // namespace icy
 
 
-/// @\}
+/// @}

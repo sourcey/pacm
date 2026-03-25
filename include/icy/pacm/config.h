@@ -15,6 +15,7 @@
 
 
 namespace icy {
+/// Package manifests, install tasks, and repository management helpers.
 namespace pacm {
 
 
@@ -51,4 +52,4 @@ namespace pacm {
 } // namespace icy
 
 
-/// @\}
+/// @}

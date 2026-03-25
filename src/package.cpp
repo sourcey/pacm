@@ -573,4 +573,4 @@ bool PackagePair::valid() const
 } // namespace icy
 
 
-/// @\}
+/// @}

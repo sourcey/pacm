@@ -51,16 +51,18 @@ inline void validatePathComponent(std::string_view name, std::string_view contex
 }
 
 
+/// Keyed store of installed packages indexed by package ID.
 using LocalPackageStore = KeyedStore<std::string, LocalPackage>;
+
+/// Keyed store of remote package metadata indexed by package ID.
 using RemotePackageStore = KeyedStore<std::string, RemotePackage>;
 
 
-/// The Package Manager provides an interface for managing,
-/// installing, updating and uninstalling Pacm packages.
+/// Loads package manifests and coordinates install, update, and uninstall workflows.
 class Pacm_API PackageManager
 {
 public:
-    /// Package manager initialization options.
+    /// Startup configuration for repository endpoints, credentials, and directories.
     struct Options
     {
         std::string endpoint;       ///< The HTTP server endpoint
@@ -334,4 +336,4 @@ protected:
 } // namespace icy
 
 
-/// @\}
+/// @}

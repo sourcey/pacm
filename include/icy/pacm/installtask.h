@@ -27,7 +27,7 @@ namespace pacm {
 class Pacm_API PackageManager;
 
 
-/// State machine states for package installation
+/// State machine states for package installation.
 struct InstallationState : public State
 {
     enum Type
@@ -85,7 +85,7 @@ struct InstallOptions
 };
 
 
-/// This class implements the package installation procedure.
+/// Downloads, extracts, and finalizes a single package installation.
 class Pacm_API InstallTask : public basic::Runnable
     , public Stateful<InstallationState>
 {
@@ -204,7 +204,10 @@ protected:
 };
 
 
+/// Vector of raw install task pointers used for transient iteration.
 using InstallTaskVec = std::vector<InstallTask*>;
+
+/// Vector of shared install task handles retained across async workflows.
 using InstallTaskPtrVec = std::vector<InstallTask::Ptr>;
 
 
@@ -212,4 +215,4 @@ using InstallTaskPtrVec = std::vector<InstallTask::Ptr>;
 } // namespace icy
 
 
-/// @\}
+/// @}

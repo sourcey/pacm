@@ -19,10 +19,11 @@ namespace icy {
 namespace pacm {
 
 
+/// Vector of local package pointers used by install monitor progress snapshots.
 using LocalPackageVec = std::vector<LocalPackage*>;
 
 
-/// Progress monitor for package installation operations
+/// Aggregates multiple install tasks and reports overall progress.
 class Pacm_API InstallMonitor
 {
 public:
@@ -104,4 +105,4 @@ inline std::string getInstallTaskNamesString(LocalPackageVec& packages)
 } // namespace icy
 
 
-/// @\}
+/// @}

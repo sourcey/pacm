@@ -145,4 +145,4 @@ bool InstallMonitor::isComplete() const
 } // namespace icy
 
 
-/// @\}
+/// @}

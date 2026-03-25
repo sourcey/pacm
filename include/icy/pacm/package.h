@@ -19,13 +19,10 @@ namespace icy {
 namespace pacm {
 
 
-/// This class is a JSON representation of an
-/// package belonging to the PackageManager.
+/// JSON-backed package metadata shared by local and remote package records.
 struct Package : public json::Value
 {
-    /// This class represents a archived file
-    /// asset containing files belonging to
-    /// the parent package.
+    /// Archive asset metadata for a specific package build.
     struct Asset
     {
         /// @param src JSON object node that backs this asset.
@@ -109,9 +106,7 @@ struct Package : public json::Value
 // Remote Package
 //
 
-/// This class is a JSON representation of an
-/// package existing on the remote server that
-/// may be downloaded and installed.
+/// Package metadata loaded from the remote package index.
 struct RemotePackage : public Package
 {
     /// Constructs an empty remote package.
@@ -149,13 +144,10 @@ struct RemotePackage : public Package
 // Local Package
 //
 
-/// This class is a JSON representation of an
-/// installed local package that exists on the
-/// file system.
+/// Package metadata for an installed package on the local filesystem.
 struct LocalPackage : public Package
 {
-    /// This class provides a list of all package
-    /// files and their location on the file system.
+    /// Manifest of installed files recorded for a local package.
     struct Manifest
     {
         /// @param src JSON array node that backs this manifest.
@@ -287,8 +279,7 @@ struct LocalPackage : public Package
 // Package Pair
 //
 
-/// This class provides pairing of a local and a
-/// remote package.
+/// Pairing of the installed and remote metadata for the same package ID.
 struct PackagePair
 {
     /// @param local  Pointer to the locally installed package, or nullptr if not installed.
@@ -319,6 +310,7 @@ struct PackagePair
 };
 
 
+/// Vector of local/remote package pairs used for reconciliation and update checks.
 using PackagePairVec = std::vector<PackagePair>;
 
 
@@ -326,4 +318,4 @@ using PackagePairVec = std::vector<PackagePair>;
 } // namespace icy
 
 
-/// @\}
+/// @}

@@ -459,4 +459,4 @@ uv::Loop* InstallTask::loop() const
 } // namespace icy
 
 
-/// @\}
+/// @}
