@@ -5,12 +5,12 @@
 [![CI](https://github.com/sourcey/icey/actions/workflows/ci.yml/badge.svg)](https://github.com/sourcey/icey/actions/workflows/ci.yml)
 
 **Repository**: [https://github.com/sourcey/icey](https://github.com/sourcey/icey)
-**Dependencies**: [Icey (base, net, json, http, archo, crypto)](https://github.com/sourcey/icey)
+**Dependencies**: [icey (base, net, json, http, archo, crypto)](https://github.com/sourcey/icey)
 **Licence**: LGPL-2.1+
 
 ## Installing
 
-Pacm is part of the [Icey](https://github.com/sourcey/icey) project. To build:
+Pacm is part of the [icey](https://github.com/sourcey/icey) project. To build:
 
 ~~~ bash
 git clone https://github.com/sourcey/icey.git
@@ -20,7 +20,7 @@ cmake -B build -DBUILD_MODULE_pacm=ON -DBUILD_TESTS=ON
 cmake --build build
 ~~~
 
-Pacm can also be used as an external module by cloning it into the Icey `src` folder, where it will be auto-discovered by the build system.
+Pacm can also be used as an external module by cloning it into the icey `src` folder, where it will be auto-discovered by the build system.
 
 ## Overview
 
@@ -34,7 +34,7 @@ Pacm is your solution for a simple C++ package manager that can be embedded and 
 
 Pacm should be familiar territory if you've ever used `rubygems` in Ruby, or `npm` in NodeJS. Basically, a [package list](#client-server-protocol) is downloaded from the server in JSON format, and the client then [issues commands](#supported-commands) to manage packages installed on the local system. You can work with the API one of two ways; by [embedding Pacm](#embedding-pacm) and compiling it with your application; or by redistributing it with your application and calling the [Pacm command line tool](#redistributable-command-line-tool) directly.
 
-The Pacm code base is kept small and readable thanks to Icey, which abstracts and handles complex cross-platform tasks such as networking, filesystem and cryptography. Icey is built on top of `libuv`, and provides a modern C++20 interface for the native Pacm API.
+The Pacm code base is kept small and readable thanks to icey, which abstracts and handles complex cross-platform tasks such as networking, filesystem and cryptography. icey is built on top of `libuv`, and provides a modern C++20 interface for the native Pacm API.
 
 There are a lot of open source [package managers](http://en.wikipedia.org/wiki/List_of_software_package_management_systems) out there, but there has been great need of a simple embeddable package manager in C++ for some time. For this reason we built Pacm, and we're pleased to contribute it to the open source community.
 
@@ -181,7 +181,7 @@ The server responds with an array of packages and available file assets in JSON 
 
 If you improve on the code base and want to contribute to the project then pull requests are always very welcome.
 
-1. [Fork Icey on Github](https://github.com/sourcey/icey)
+1. [Fork icey on Github](https://github.com/sourcey/icey)
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
