@@ -2,18 +2,18 @@
 
 > Simple C++ package manager
 
-[![CI](https://github.com/sourcey/icey/actions/workflows/ci.yml/badge.svg)](https://github.com/sourcey/icey/actions/workflows/ci.yml)
+[![CI](https://github.com/nilstate/icey/actions/workflows/ci.yml/badge.svg)](https://github.com/nilstate/icey/actions/workflows/ci.yml)
 
-**Repository**: [https://github.com/sourcey/icey](https://github.com/sourcey/icey)
-**Dependencies**: [icey (base, net, json, http, archo, crypto)](https://github.com/sourcey/icey)
+**Repository**: [https://github.com/nilstate/icey](https://github.com/nilstate/icey)
+**Dependencies**: [icey (base, net, json, http, archo, crypto)](https://github.com/nilstate/icey)
 **Licence**: LGPL-2.1+
 
 ## Installing
 
-Pacm is part of the [icey](https://github.com/sourcey/icey) project. To build:
+Pacm is part of the [icey](https://github.com/nilstate/icey) project. To build:
 
 ~~~ bash
-git clone https://github.com/sourcey/icey.git
+git clone https://github.com/nilstate/icey.git
 cd icey
 git submodule update --init src/pacm
 cmake -B build -DBUILD_MODULE_pacm=ON -DBUILD_TESTS=ON
@@ -181,7 +181,7 @@ The server responds with an array of packages and available file assets in JSON 
 
 If you improve on the code base and want to contribute to the project then pull requests are always very welcome.
 
-1. [Fork icey on Github](https://github.com/sourcey/icey)
+1. [Fork icey on Github](https://github.com/nilstate/icey)
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
