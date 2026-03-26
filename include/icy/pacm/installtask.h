@@ -141,8 +141,8 @@ public:
     /// Returns a pointer to the remote package record.
     virtual RemotePackage* remote() const;
 
-    /// Returns a reference to the installation options for this task.
-    virtual InstallOptions& options();
+    /// Returns a read-only view of the installation options for this task.
+    [[nodiscard]] virtual const InstallOptions& options() const;
 
     /// Returns the libuv event loop used for async operations.
     virtual uv::Loop* loop() const;

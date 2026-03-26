@@ -290,8 +290,12 @@ public:
     //
     /// Accessors
 
-    /// Returns a reference to the current options.
-    virtual Options& options();
+    /// Returns the mutable startup configuration for this manager.
+    /// Callers should finish edits before initialize().
+    virtual Options& mutableOptions();
+
+    /// Returns a read-only view of the current options.
+    [[nodiscard]] virtual const Options& options() const;
 
     /// Returns a reference to the in-memory remote package store.
     virtual RemotePackageStore& remotePackages();

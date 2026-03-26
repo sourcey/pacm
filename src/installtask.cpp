@@ -207,7 +207,7 @@ void InstallTask::doDownload()
         new std::ofstream(outfile, std::ios_base::out | std::ios_base::binary));
     _dlconn->IncomingProgress += slot(this, &InstallTask::onDownloadProgress);
     _dlconn->Complete += slot(this, &InstallTask::onDownloadComplete);
-    _dlconn->submit();
+    _dlconn->start();
 
     _downloading = true;
 }
@@ -443,7 +443,7 @@ RemotePackage* InstallTask::remote() const
 }
 
 
-InstallOptions& InstallTask::options()
+const InstallOptions& InstallTask::options() const
 {
     return _options;
 }

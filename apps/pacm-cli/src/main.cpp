@@ -93,17 +93,17 @@ public:
             if (key == "help") {
                 options.help = true;
             } else if (key == "endpoint") {
-                manager.options().endpoint = value;
+                manager.mutableOptions().endpoint = value;
             } else if (key == "uri") {
-                manager.options().indexURI = value;
+                manager.mutableOptions().indexURI = value;
             } else if (key == "install-dir") {
-                manager.options().installDir = value;
+                manager.mutableOptions().installDir = value;
             } else if (key == "data-dir") {
-                manager.options().dataDir = value;
+                manager.mutableOptions().dataDir = value;
             } else if (key == "temp-dir") {
-                manager.options().tempDir = value;
+                manager.mutableOptions().tempDir = value;
             } else if (key == "packages") {
-                manager.options().endpoint = value;
+                manager.mutableOptions().endpoint = value;
             } else if (key == "install") {
                 options.install = util::split(value, ",");
             } else if (key == "uninstall") {

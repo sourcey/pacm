@@ -118,7 +118,7 @@ void PackageManager::queryRemotePackages()
             conn->close();
         };
 
-        conn->submit();
+        conn->start();
     } catch (std::exception& exc) {
         SError << "Package Query Error: " << exc.what() << endl;
         throw exc;
@@ -829,7 +829,14 @@ std::string PackageManager::getPackageDataDir(std::string_view id)
 }
 
 
-PackageManager::Options& PackageManager::options()
+PackageManager::Options& PackageManager::mutableOptions()
+{
+    std::lock_guard<std::mutex> guard(_mutex);
+    return _options;
+}
+
+
+const PackageManager::Options& PackageManager::options() const
 {
     std::lock_guard<std::mutex> guard(_mutex);
     return _options;
