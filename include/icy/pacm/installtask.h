@@ -113,7 +113,7 @@ public:
     virtual void start();
 
     /// Transitions the task to the Cancelled state.
-    virtual void cancel();
+    void cancel(bool flag = true) override;
 
     /// Downloads the package archive from the server.
     virtual void doDownload();

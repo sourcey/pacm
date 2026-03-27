@@ -105,9 +105,11 @@ void InstallTask::start()
 }
 
 
-void InstallTask::cancel()
+void InstallTask::cancel(bool flag)
 {
-    setState(this, InstallationState::Cancelled);
+    basic::Runnable::cancel(flag);
+    if (flag)
+        setState(this, InstallationState::Cancelled);
 }
 
 

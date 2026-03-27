@@ -26,7 +26,7 @@ InstallMonitor::InstallMonitor()
 }
 
 
-InstallMonitor::~InstallMonitor()
+InstallMonitor::~InstallMonitor() noexcept
 {
 }
 
