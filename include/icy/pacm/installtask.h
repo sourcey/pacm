@@ -152,7 +152,7 @@ public:
     virtual bool valid() const;
 
     /// Returns true if the task is in the Cancelled state.
-    virtual bool cancelled() const;
+    bool cancelled() const override;
 
     /// Returns true if the task is in the Failed state.
     virtual bool failed() const;
@@ -176,10 +176,10 @@ public:
 
 protected:
     /// Called asynchronously by the thread to do the work.
-    virtual void run();
+    void run() override;
 
-    virtual void onStateChange(InstallationState& state,
-                               const InstallationState& oldState);
+    void onStateChange(InstallationState& state,
+                       const InstallationState& oldState) override;
     virtual void onDownloadProgress(const double& progress);
     virtual void onDownloadComplete(const http::Response& response);
 
