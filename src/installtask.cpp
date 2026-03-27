@@ -47,7 +47,7 @@ InstallTask::InstallTask(PackageManager& manager, LocalPackage* local, RemotePac
 }
 
 
-InstallTask::~InstallTask()
+InstallTask::~InstallTask() noexcept
 {
     LTrace("Destory");
 

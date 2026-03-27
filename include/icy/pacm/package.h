@@ -285,6 +285,7 @@ struct PackagePair
     /// @param local  Pointer to the locally installed package, or nullptr if not installed.
     /// @param remote Pointer to the remote package record, or nullptr if not known.
     PackagePair(LocalPackage* local = nullptr, RemotePackage* remote = nullptr);
+    virtual ~PackagePair() = default;
 
     /// Returns true if at least one of local/remote is set and that pointer is itself valid().
     virtual bool valid() const;

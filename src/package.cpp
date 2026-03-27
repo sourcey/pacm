@@ -35,7 +35,7 @@ Package::Package(const json::Value& src)
 }
 
 
-Package::~Package()
+Package::~Package() noexcept
 {
 }
 
@@ -99,7 +99,7 @@ Package::Asset::Asset(json::Value& src)
 }
 
 
-Package::Asset::~Asset()
+Package::Asset::~Asset() noexcept
 {
 }
 
@@ -181,7 +181,7 @@ RemotePackage::RemotePackage(const json::Value& src)
 }
 
 
-RemotePackage::~RemotePackage()
+RemotePackage::~RemotePackage() noexcept
 {
 }
 
@@ -287,7 +287,7 @@ LocalPackage::LocalPackage(const RemotePackage& src)
 }
 
 
-LocalPackage::~LocalPackage()
+LocalPackage::~LocalPackage() noexcept
 {
 }
 
@@ -503,7 +503,7 @@ LocalPackage::Manifest::Manifest(json::Value& src)
 }
 
 
-LocalPackage::Manifest::~Manifest()
+LocalPackage::Manifest::~Manifest() noexcept
 {
 }
 

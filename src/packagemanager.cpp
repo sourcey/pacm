@@ -34,7 +34,7 @@ PackageManager::PackageManager(const Options& options)
 }
 
 
-PackageManager::~PackageManager()
+PackageManager::~PackageManager() noexcept
 {
 }
 
