@@ -90,7 +90,7 @@ pm.uninstallPackage("SomePackageName");
 
 If you're planning on using the native API then the best place to start is the source code of the [pacm-cli command line tool](apps/pacm-cli/src/main.cpp), which can be easily reverse engineered and modified for your own purposes.
 
-For all method definitions and further documentation the [source code](include/scy/pacm/packagemanager.h) is always the best reference.
+For all method definitions and further documentation the [source code](include/icy/pacm/packagemanager.h) is always the best reference.
 
 ## Redistributable Command Line Tool
 
