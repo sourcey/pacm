@@ -14,6 +14,9 @@
 
 #include "icy/json/json.h"
 
+#include <string_view>
+#include <vector>
+
 
 namespace icy {
 namespace pacm {
@@ -22,6 +25,37 @@ namespace pacm {
 /// JSON-backed package metadata shared by local and remote package records.
 struct Package : public json::Value
 {
+    /// Optional extension metadata that describes how a packaged runtime unit is loaded.
+    struct Extension
+    {
+        /// @param src JSON object node that backs this extension metadata.
+        Extension(const json::Value& src);
+        virtual ~Extension() noexcept;
+
+        /// Returns the loader/runtime contract name (for example "graft").
+        virtual std::string loader() const;
+
+        /// Returns the runtime kind (for example "native" or "worker").
+        virtual std::string runtime() const;
+
+        /// Returns the install-relative entrypoint path.
+        virtual std::string entryPoint() const;
+
+        /// Returns the extension ABI version, or 0 if not specified.
+        virtual int abiVersion() const;
+
+        /// Returns the declared capabilities.
+        virtual std::vector<std::string> capabilities() const;
+
+        /// Returns true when the metadata is internally consistent.
+        virtual bool valid() const;
+
+        /// Returns true when @p capability is declared.
+        virtual bool hasCapability(std::string_view capability) const;
+
+        const json::Value& root;
+    };
+
     /// Archive asset metadata for a specific package build.
     struct Asset
     {
@@ -89,6 +123,13 @@ struct Package : public json::Value
 
     /// Returns the package description string.
     virtual std::string description() const;
+
+    /// Returns true when the package has an "extension" object.
+    virtual bool hasExtension() const;
+
+    /// Returns a read-only view of the extension metadata.
+    /// Throws if no extension object is present.
+    virtual Extension extension() const;
 
     /// Returns true if id, name and type are all non-empty.
     virtual bool valid() const;
@@ -258,6 +299,10 @@ struct LocalPackage : public Package
     virtual std::string getInstalledFilePath(const std::string& fileName,
                                              bool whiny = false);
 
+    /// Returns the install-relative extension entrypoint resolved against installDir().
+    /// Returns an empty string when no extension metadata is present.
+    virtual std::string extensionEntryPointPath(bool whiny = false) const;
+
     /// Returns a reference to the JSON array of accumulated error messages.
     virtual json::Value& errors();
 
@@ -301,6 +346,9 @@ struct PackagePair
 
     /// Returns the package author, preferring the local package if available.
     std::string author() const;
+
+    /// Returns true when either side carries extension metadata.
+    bool hasExtension() const;
 
     /// Returns true if there are no possible updates for
     /// this package, false otherwise.

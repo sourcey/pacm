@@ -27,6 +27,13 @@ static const char* REMOTE_PACKAGE_JSON = R"({
     "type": "Plugin",
     "author": "Test Author",
     "description": "A test package",
+    "extension": {
+        "loader": "graft",
+        "runtime": "native",
+        "entrypoint": "lib/test-plugin.so",
+        "abi-version": 1,
+        "capabilities": ["processor.video", "detector"]
+    },
     "assets": [
         {
             "version": "1.0.0",
@@ -59,6 +66,30 @@ static const char* REMOTE_PACKAGE_JSON = R"({
 })";
 
 
+static const char* WORKER_PACKAGE_JSON = R"({
+    "id": "test-worker",
+    "name": "Test Worker",
+    "type": "Extension",
+    "author": "Test Author",
+    "description": "A worker runtime package",
+    "extension": {
+        "runtime": "worker",
+        "entrypoint": "bin/test-worker",
+        "capabilities": ["processor.audio"]
+    },
+    "assets": [
+        {
+            "version": "1.0.0",
+            "platform": "linux",
+            "checksum": "worker123",
+            "file-name": "test-worker-1.0.0.zip",
+            "file-size": 512,
+            "mirrors": [{"url": "https://example.com/test-worker-1.0.0.zip"}]
+        }
+    ]
+})";
+
+
 int main(int argc, char** argv)
 {
     // Logger::instance().add(std::make_unique<ConsoleChannel>("debug", Level::Trace));
@@ -77,6 +108,16 @@ int main(int argc, char** argv)
         expect(pkg.author() == "Test Author");
         expect(pkg.description() == "A test package");
         expect(pkg.valid());
+        expect(pkg.hasExtension());
+
+        auto extension = pkg.extension();
+        expect(extension.valid());
+        expect(extension.loader() == "graft");
+        expect(extension.runtime() == "native");
+        expect(extension.entryPoint() == "lib/test-plugin.so");
+        expect(extension.abiVersion() == 1);
+        expect(extension.hasCapability("detector"));
+        expect(!extension.hasCapability("processor.audio"));
 
         // Serialize back and verify key fields survive the round-trip
         json::Value serialized = pkg.toJson();
@@ -85,6 +126,7 @@ int main(int argc, char** argv)
         expect(serialized["type"].get<std::string>() == "Plugin");
         expect(serialized["author"].get<std::string>() == "Test Author");
         expect(serialized["description"].get<std::string>() == "A test package");
+        expect(serialized["extension"]["loader"].get<std::string>() == "graft");
         expect(serialized["assets"].size() == 3);
     });
 
@@ -169,6 +211,8 @@ int main(int argc, char** argv)
 
         // Assets field should be cleared
         expect(local.find("assets") == local.end());
+        expect(local.hasExtension());
+        expect(local.extension().entryPoint() == "lib/test-plugin.so");
     });
 
     // =========================================================================
@@ -264,6 +308,49 @@ int main(int argc, char** argv)
         expect(manifest2.root.size() == 2);
         expect(manifest2.root[0].get<std::string>() == "lib/plugin.so");
         expect(manifest2.root[1].get<std::string>() == "config/plugin.json");
+    });
+
+    // =========================================================================
+    // Extension Metadata
+    //
+    describe("extension metadata helpers", []() {
+        json::Value j = json::Value::parse(REMOTE_PACKAGE_JSON);
+        pacm::RemotePackage remote(j);
+        pacm::LocalPackage local(remote);
+
+        local.setInstallDir("/opt/icey/plugins");
+
+        auto extension = local.extension();
+        expect(extension.valid());
+        expect(extension.capabilities().size() == 2);
+        expect(local.extensionEntryPointPath() == "/opt/icey/plugins/lib/test-plugin.so");
+
+        pacm::PackagePair pair(&local, &remote);
+        expect(pair.hasExtension());
+    });
+
+    describe("worker extension does not require loader", []() {
+        json::Value j = json::Value::parse(WORKER_PACKAGE_JSON);
+        pacm::RemotePackage worker(j);
+
+        expect(worker.hasExtension());
+        auto extension = worker.extension();
+        expect(extension.valid());
+        expect(extension.loader() == "");
+        expect(extension.runtime() == "worker");
+        expect(extension.hasCapability("processor.audio"));
+    });
+
+    describe("invalid extension metadata is rejected", []() {
+        json::Value j = json::Value::parse(REMOTE_PACKAGE_JSON);
+        pacm::RemotePackage remote(j);
+
+        remote["extension"]["loader"] = "";
+        expect(!remote.extension().valid());
+
+        remote["extension"]["loader"] = "graft";
+        remote["extension"]["capabilities"] = "detector";
+        expect(!remote.extension().valid());
     });
 
     // =========================================================================

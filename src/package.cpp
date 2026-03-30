@@ -24,6 +24,101 @@ namespace pacm {
 //
 
 
+Package::Extension::Extension(const json::Value& src)
+    : root(src)
+{
+}
+
+
+Package::Extension::~Extension() noexcept
+{
+}
+
+
+std::string Package::Extension::loader() const
+{
+    return root.value("loader", "");
+}
+
+
+std::string Package::Extension::runtime() const
+{
+    return root.value("runtime", "");
+}
+
+
+std::string Package::Extension::entryPoint() const
+{
+    return root.value("entrypoint", "");
+}
+
+
+int Package::Extension::abiVersion() const
+{
+    return root.value("abi-version", 0);
+}
+
+
+std::vector<std::string> Package::Extension::capabilities() const
+{
+    std::vector<std::string> values;
+    auto it = root.find("capabilities");
+    if (it == root.end() || it->is_null())
+        return values;
+    if (!it->is_array())
+        return values;
+
+    for (const auto& value : *it) {
+        if (!value.is_string())
+            return {};
+        values.push_back(value.get<std::string>());
+    }
+
+    return values;
+}
+
+
+bool Package::Extension::valid() const
+{
+    if (!root.is_object())
+        return false;
+
+    const auto runtimeValue = runtime();
+    const auto entryPointValue = entryPoint();
+    if (runtimeValue.empty() || entryPointValue.empty())
+        return false;
+
+    if (runtimeValue == "native" && loader().empty())
+        return false;
+
+    auto abi = abiVersion();
+    if (abi < 0)
+        return false;
+
+    auto it = root.find("capabilities");
+    if (it != root.end()) {
+        if (!it->is_array())
+            return false;
+        for (const auto& value : *it) {
+            if (!value.is_string() || value.get<std::string>().empty())
+                return false;
+        }
+    }
+
+    return true;
+}
+
+
+bool Package::Extension::hasCapability(std::string_view capability) const
+{
+    for (const auto& value : capabilities()) {
+        if (value == capability)
+            return true;
+    }
+    return false;
+}
+
+
 Package::Package()
 {
 }
@@ -79,6 +174,22 @@ std::string Package::author() const
 std::string Package::description() const
 {
     return (*this)["description"].get<std::string>();
+}
+
+
+bool Package::hasExtension() const
+{
+    auto it = find("extension");
+    return it != end() && it->is_object();
+}
+
+
+Package::Extension Package::extension() const
+{
+    auto it = find("extension");
+    if (it == end() || !it->is_object())
+        throw std::runtime_error("Package does not contain extension metadata");
+    return Extension(*it);
 }
 
 
@@ -371,6 +482,26 @@ std::string LocalPackage::getInstalledFilePath(const std::string& fileName, bool
 }
 
 
+std::string LocalPackage::extensionEntryPointPath(bool whiny) const
+{
+    if (!hasExtension())
+        return "";
+
+    const auto ext = extension();
+    if (!ext.valid()) {
+        if (whiny)
+            throw std::runtime_error("Package extension metadata is invalid.");
+        return "";
+    }
+
+    const auto dir = installDir();
+    if (whiny && dir.empty())
+        throw std::runtime_error("Package install directory is not set.");
+
+    return dir.empty() ? ext.entryPoint() : fs::makePath(dir, ext.entryPoint());
+}
+
+
 void LocalPackage::setVersionLock(const std::string& version)
 {
     if (version.empty())
@@ -557,6 +688,12 @@ std::string PackagePair::author() const
 {
     return local ? local->author() : remote ? remote->author()
                                             : "";
+}
+
+
+bool PackagePair::hasExtension() const
+{
+    return (local && local->hasExtension()) || (remote && remote->hasExtension());
 }
 
 

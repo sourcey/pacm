@@ -7,7 +7,7 @@
 //
 /// @defgroup pacm Pacm module
 ///
-/// Package manager for distributing and installing plugins.
+/// Package manager for distributing and installing packaged extensions and assets.
 /// @{
 
 
