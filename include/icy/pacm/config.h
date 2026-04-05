@@ -13,6 +13,8 @@
 
 #pragma once
 
+#include "icy/base.h"
+
 
 namespace icy {
 /// Package manifests, install tasks, and repository management helpers.
@@ -37,14 +39,10 @@ namespace pacm {
 #endif
 
 // Shared library exports
-#if defined(ICY_WIN) && defined(ICY_SHARED_LIBRARY)
 #if defined(Pacm_EXPORTS)
-#define Pacm_API __declspec(dllexport)
+#define Pacm_API ICY_EXPORT
 #else
-#define Pacm_API __declspec(dllimport)
-#endif
-#else
-#define Pacm_API // nothing
+#define Pacm_API ICY_IMPORT
 #endif
 
 
