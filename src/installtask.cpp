@@ -191,6 +191,9 @@ void InstallTask::doDownload()
     if (!asset.valid())
         throw std::runtime_error(
             "Package download failed: The remote asset is invalid.");
+    if (asset.checksum().empty())
+        throw std::runtime_error(
+            "Package download failed: The remote asset has no checksum.");
 
     // If the remote asset already exists in the cache, we can
     // skip the download.
@@ -252,16 +255,16 @@ void InstallTask::doExtract()
         throw std::runtime_error(
             "The local package has an unsupported file extension: " + fs::extname(archivePath));
 
-    // Verify file checksum if one was provided
+    // Verify the required file checksum
     std::string originalChecksum(asset.checksum());
-    if (!originalChecksum.empty()) {
-        std::string computedChecksum(crypto::checksum(
-            _manager.options().checksumAlgorithm, archivePath));
-        SDebug << "Verify checksum: original=" << originalChecksum
-               << ", computed=" << computedChecksum << endl;
-        if (originalChecksum != computedChecksum)
-            throw std::runtime_error("Checksum verification failed: " + fs::extname(archivePath));
-    }
+    if (originalChecksum.empty())
+        throw std::runtime_error("Package asset checksum is required: " + asset.fileName());
+    std::string computedChecksum(crypto::checksum(
+        _manager.options().checksumAlgorithm, archivePath));
+    SDebug << "Verify checksum: original=" << originalChecksum
+           << ", computed=" << computedChecksum << endl;
+    if (originalChecksum != computedChecksum)
+        throw std::runtime_error("Checksum verification failed: " + fs::extname(archivePath));
 
     // Create the output directory
     std::string tempDir(_manager.getPackageDataDir(_local->id()));

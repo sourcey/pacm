@@ -83,8 +83,8 @@ struct Package : public json::Value
         /// Returns the uncompressed file size in bytes, or 0 if not set.
         virtual int fileSize() const;
 
-        /// Returns true if the asset has the minimum required fields
-        /// (file-name, version, mirrors).
+        /// Returns true if the asset has a file name, version, checksum,
+        /// and at least one HTTPS mirror URL.
         virtual bool valid() const;
 
         /// Writes the raw JSON of this asset to @p ost.

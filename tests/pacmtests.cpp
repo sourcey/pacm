@@ -145,6 +145,16 @@ int main(int argc, char** argv)
         expect(asset.fileSize() == 1024);
         expect(asset.url() == "https://example.com/test-1.0.0.zip");
         expect(asset.valid());
+
+        json::Value missingChecksum = asset.root;
+        missingChecksum.erase("checksum");
+        pacm::Package::Asset noChecksum(missingChecksum);
+        expect(!noChecksum.valid());
+
+        json::Value insecureMirror = asset.root;
+        insecureMirror["mirrors"][0]["url"] = "http://example.com/test.zip";
+        pacm::Package::Asset httpAsset(insecureMirror);
+        expect(!httpAsset.valid());
     });
 
     // =========================================================================

@@ -14,9 +14,30 @@
 #include "icy/logger.h"
 #include "icy/util.h"
 
+#include <stdexcept>
+
 
 namespace icy {
 namespace pacm {
+
+namespace {
+
+bool isHttpsUrl(const std::string& url)
+{
+    return util::icompare(url.substr(0, 8), "https://") == 0;
+}
+
+bool validMirror(const json::Value& mirror)
+{
+    if (!mirror.is_object())
+        return false;
+    auto it = mirror.find("url");
+    if (it == mirror.end() || !it->is_string())
+        return false;
+    return isHttpsUrl(it->get<std::string>());
+}
+
+} // namespace
 
 
 //
@@ -241,7 +262,16 @@ std::string Package::Asset::checksum() const
 
 std::string Package::Asset::url(int index) const
 {
-    return root["mirrors"][index]["url"].get<std::string>();
+    auto mirrors = root.find("mirrors");
+    if (mirrors == root.end() || !mirrors->is_array() ||
+        index < 0 || index >= static_cast<int>(mirrors->size())) {
+        throw std::out_of_range("Package asset mirror index out of range");
+    }
+
+    const auto& mirror = (*mirrors)[index];
+    if (!validMirror(mirror))
+        throw std::runtime_error("Package asset mirror URL must use https");
+    return mirror["url"].get<std::string>();
 }
 
 
@@ -253,7 +283,31 @@ int Package::Asset::fileSize() const
 
 bool Package::Asset::valid() const
 {
-    return root.find("file-name") != root.end() && root.find("version") != root.end() && root.find("mirrors") != root.end();
+    if (!root.is_object())
+        return false;
+
+    auto hasString = [this](const char* key) {
+        auto it = root.find(key);
+        return it != root.end() && it->is_string() &&
+               !it->get<std::string>().empty();
+    };
+
+    if (!hasString("file-name") ||
+        !hasString("version") ||
+        !hasString("checksum")) {
+        return false;
+    }
+
+    auto mirrors = root.find("mirrors");
+    if (mirrors == root.end() || !mirrors->is_array() || mirrors->empty())
+        return false;
+
+    for (const auto& mirror : *mirrors) {
+        if (!validMirror(mirror))
+            return false;
+    }
+
+    return true;
 }
 
 
